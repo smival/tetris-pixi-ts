@@ -19,6 +19,8 @@
     "html-webpack-plugin": "^3.2.0"
   },
   "dependencies": {
-    "pixi.js": "^4.8.3"
+    "@types/node": "^11.11.3",
+    "pixi.js": "^4.8.3",
+    "rectangles": "0.0.4"
   }
 }
