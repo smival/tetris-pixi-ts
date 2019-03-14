@@ -163,7 +163,7 @@ class Figure
 
     respawn(x:number, y:number)
     {
-        console.log(`new spawn: ${x}-${y}`);
+        console.log(`fig ${this.id} new spawn: ${x}-${y}`);
         this.x = x;
         this.y = y;
     }
