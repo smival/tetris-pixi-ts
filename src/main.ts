@@ -1,8 +1,8 @@
 import * as PIXI from 'pixi.js';
 
 // todo move to conf
-const contWidth:number = 15;
-const contHeight:number = 30;
+const contWidth:number = 15;    // 15
+const contHeight:number = 15;   // 30
 const contFieldSize:number = 24;
 const poolSize:number = 2;
 const figureDropDt:number = 100; // 1000
@@ -88,33 +88,33 @@ PIXI.loader.add([{name:'bunny', url:'bunny.png', crossOrigin:'true'}]).load((loa
 
 class EFigureType 
 {
-    static I = [[0,1,0,0], 
-                [0,1,0,0], 
-                [0,1,0,0], 
-                [0,1,0,0]]; 
-    static J = [[0,0,0,0], 
-                [0,1,0,0], 
-                [0,1,1,1], 
-                [0,0,0,0]]; 
-    static L = [[0,0,0,0], 
-                [0,0,0,1], 
-                [0,1,1,1], 
-                [0,0,0,0]];  
-    static O = [[0,0,0,0], 
-                [0,1,1,0], 
-                [0,1,1,0], 
-                [0,0,0,0]];  
-    static S = [[0,0,0,0], 
-                [0,0,1,1], 
-                [0,1,1,0], 
-                [0,0,0,0]];  
-    static T = [[0,0,1,0], 
-                [0,1,1,1], 
+    static I = [[1,0,0,0], 
+                [1,0,0,0], 
+                [1,0,0,0], 
+                [1,0,0,0]]; 
+    static J = [[1,0,0,0], 
+                [1,1,1,0], 
                 [0,0,0,0], 
                 [0,0,0,0]]; 
-    static Z = [[0,0,0,0], 
+    static L = [[0,0,1,0], 
+                [1,1,1,0], 
+                [0,0,0,0], 
+                [0,0,0,0]];  
+    static O = [[1,1,0,0], 
+                [1,1,0,0], 
+                [0,0,0,0], 
+                [0,0,0,0]];  
+    static S = [[0,1,1,0], 
+                [1,1,0,0], 
+                [0,0,0,0], 
+                [0,0,0,0]];  
+    static T = [[0,1,0,0], 
+                [1,1,1,0], 
+                [0,0,0,0], 
+                [0,0,0,0]]; 
+    static Z = [[1,1,0,0], 
                 [0,1,1,0], 
-                [0,0,1,1], 
+                [0,0,0,0], 
                 [0,0,0,0]];
 
     static all = [EFigureType.I, EFigureType.J, EFigureType.L, EFigureType.O, EFigureType.S, EFigureType.T, EFigureType.Z];
@@ -125,8 +125,16 @@ class EFigureType
     }
 }
 
+class Point
+{
+    x:number;
+    y:number;
+}
+
 class Figure
 {
+    static lastId:number = 0;
+    id:number;
     color:number;
     shape:number[][];
     x:number = 0;
@@ -136,6 +144,7 @@ class Figure
 
     constructor(newPerfectShape:number[][], color:number)
     {
+        this.id = Figure.lastId++;
         this.color = color;
         this.shape = newPerfectShape;
         this._w = newPerfectShape[0].length;
@@ -176,14 +185,25 @@ class Figure
             for(var col:number = 0; col< this.shape[row].length; col++)
                 if (this.shape[row][col])
                 {
-                    if (col < l) l = col+1;
-                    if (row < t) t = row+1;
+                    if (col < l) l = col;
+                    if (row < t) t = row;
                     if (col > r) r = col+1;
                     if (row > b) b = row+1;
                 }
                     
 
         return new Rectangle(this.x+l, this.y+t, r-l, b-t);
+    }
+
+    getPoints():Point[]
+    {
+        var r:Point[] = [];
+        for(var row:number = 0; row < this.shape.length; row++) 
+            for(var col:number = 0; col< this.shape[row].length; col++)
+                if (this.shape[row][col])
+                    r.push({x:this.x + col, y:this.y + row});
+
+        return r;
     }
 
     rotateLeft()
@@ -200,24 +220,30 @@ class Figure
 
 class Model
 {
-	public nextItems:Array<Figure>;
-	public completedItems:Array<Figure>;
-    public curItem:Figure;
+    _poolSize:Int;
+	poolItems:Array<Figure>;
+	completedItems:Array<Figure>;
+    curItem:Figure;
     
-    constructor()
+    constructor()  {}
+
+    resetNewGame(poolSize:Int)
     {
         this.clean();
+        this._poolSize = poolSize;
+        this.fillPool();
     }
 
-    resetNewGame(poolSize:number)
+    fillPool()
     {
-        while(poolSize--)
-            this.nextItems.push( new Figure(EFigureType.getRandomShape(), getRandomColor()) );
+        while(this.poolItems.length < poolSize)
+            this.poolItems.push( new Figure(EFigureType.getRandomShape(), getRandomColor()) );
     }
 	
     genNextItem() 
     {
-        this.curItem = this.nextItems.shift();
+        this.curItem = this.poolItems.shift();
+        this.fillPool();
     }
 
     putCompleted() 
@@ -228,7 +254,7 @@ class Model
 
     clean() 
     {
-        this.nextItems = [];
+        this.poolItems = [];
         this.completedItems = [];
         this.curItem = null;
     }
@@ -239,9 +265,11 @@ class Canvas
     colsNum:number;
     rowsNum:number;
     grid:number[][];
+    containedFigures:Figure[];
 
     constructor(colsNum, rowsNum)
     {
+        this.containedFigures = [];
         this.colsNum = colsNum;
         this.rowsNum = rowsNum;
         this.fillNewGrid();
@@ -256,6 +284,8 @@ class Canvas
 
     fillFigure(figure:Figure)
     {
+        this.containedFigures.push(figure);
+
         for(var row:number = 0; row < figure.shape.length; row++) 
             for(var col:number = 0; col< figure.shape[row].length; col++)
                 if (figure.shape[row][col])
@@ -271,23 +301,23 @@ class Canvas
 
     render(gr:PIXI.Graphics, curItem:Figure)
     {
-        const s = contFieldSize;
-
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
+
+        for (let f of this.containedFigures)
+            this._renderItem(f);
+        this._renderItem(curItem);
+    }
+
+    _renderItem(curItem:Figure)
+    {
+        const s = contFieldSize;
         gr.beginFill(curItem.color, 1);
 
-        // draw completed moves
-        for(var row:number = 0; row < this.rowsNum; row++) 
-            for(var col:number = 0; col < this.colsNum; col++)
-                if(this.grid[row][col])
-                    gr.drawRect(col*s, row*s, s, s);
-
-        // draw item
         for(var row:number = 0; row < curItem.getHeight(); row++) 
-            for(var col:number = 0; col < curItem.getWidth(); col++)
-                if(curItem.shape[row][col])
-                    gr.drawRect(curItem.x*s + col*s, curItem.y*s + row*s, s, s);
+        for(var col:number = 0; col < curItem.getWidth(); col++)
+            if(curItem.shape[row][col])
+                gr.drawRect(curItem.x*s + col*s, curItem.y*s + row*s, s, s);
 
         gr.endFill();
     }
@@ -297,13 +327,22 @@ class Canvas
         // item is out of holst
         let holstRect:Rectangle = new Rectangle(0, 0, contWidth, contHeight);
         let itemRect:Rectangle = curItem.getRect();
-        let one:boolean = (holstRect.containsRect(itemRect));
-
-        return !one;
+        let outOfHolst:boolean = !(holstRect.containsRect(itemRect));
         
+        if (outOfHolst)
+            return outOfHolst;
+
         // item intersects with others
+        let itemPoints:Point[] = curItem.getPoints();
+        let intersectsOthers:boolean = false;
+        for (let p of itemPoints)
+            if (this.grid[p.y][p.x])
+            {
+                intersectsOthers = true;
+                break;
+            }
 
-
+        return intersectsOthers;
     }
 
     checkRowsForRemove():Int[]
@@ -332,6 +371,7 @@ var dt:number = 0;
 var steps:number = 0;
 var oldSteps:number;
 var state:number = 0;
+var skipFrame:boolean = false;
 
 app.ticker.add(() => {
     
@@ -339,44 +379,57 @@ app.ticker.add(() => {
     oldSteps = steps;
     steps = roundToInt(dt / figureDropDt);
 
-    if (oldSteps != steps)
+    if (oldSteps != steps || skipFrame)
     {
+        skipFrame = false;
         oldSteps = steps;
-        console.log(`State reched: ${state}`);
+        //console.log(`State reched: ${state}`);
 
         switch(state)
         {
             case 0: // newgame
             {
-                model.resetNewGame(poolSize);
-                model.genNextItem();
+                model.resetNewGame(roundToInt(poolSize));
 
                 state = 1;
             }
             case 1: //spawn
             {
-                model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
+                model.genNextItem();
+                //model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
+                model.curItem.respawn(roundToInt(Math.random() * contWidth), 0);
+                // holst is FULL
+                if (holst.checkGameIsOver())
+                {
+
+                }
                 holst.render(gr, model.curItem);
 
                 state = 2;
                 break;
             }        
     
-            case 2: // move
+            case 2: // move & render
             {
                 model.curItem.dropByDelta(0, 1);
                 holst.render(gr, model.curItem);
+                skipFrame = true;
+                state = 3;
+                break;
+            }
+    
+            case 3: // check stop
+            {
                 model.curItem.dropByDelta(0, 1);
                 if (holst.checkStopMoving(model.curItem)) 
-                {
-                    state = 3;
-                }
+                        state = 4;
+                else    state = 2;
                 model.curItem.dropByDelta(0, -1);
 
                 break;
             }
-    
-            case 3: // remove rows or game over
+
+            case 4: // remove rows or game over
             {
                 holst.fillFigure(model.curItem);
                 state = 1;
@@ -386,10 +439,7 @@ app.ticker.add(() => {
                 
                 /*
                 holst.checkRowsForRemove();
-                if (holst.checkGameIsOver())
-                {
-
-                }*/
+                */
 
                 break;
             }
