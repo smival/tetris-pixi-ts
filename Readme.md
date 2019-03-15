@@ -23,7 +23,7 @@ See the [Game here](http://smival.com/tetris)
 ### Todos
 ~~- game over~~
 ~~- remove rows~~
-- enroll scores
+~~- enroll scores~~
 - keyboard controls
 -- space - rotarion
 -- arrows - moving

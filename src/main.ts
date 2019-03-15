@@ -7,6 +7,7 @@ const contFieldSize:number = 24;
 const poolSize:number = 2;
 const figureDropDt:number = 100; // 1000
 const figureDropMult:number = 2;
+const scores:number[] = [0, 100, 300, 700, 1500];
 
 const app = new PIXI.Application(contWidth*contFieldSize, contHeight*contFieldSize, {backgroundColor : 0x1099bb});
 const gr = new PIXI.Graphics();
@@ -224,11 +225,13 @@ class Model
 	poolItems:Array<Figure>;
 	completedItems:Array<Figure>;
     curItem:Figure;
+    curScore:number;
     
     constructor()  {}
 
     resetNewGame(poolSize:Int)
     {
+        this.curScore = 0;
         this.clean();
         this._poolSize = poolSize;
         this.fillPool();
@@ -474,7 +477,12 @@ app.ticker.add(() => {
                 holst.fillFigure(model.curItem);
                 rows2del = holst.checkRowsForRemove();
                 if (rows2del.length)
+                {
+                    model.curScore += scores[rows2del.length];
+                    console.log(`SCORE: ${model.curScore}`);
+
                     state = 5;
+                }
                 else
                     state = 1;
 
