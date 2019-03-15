@@ -322,27 +322,28 @@ class Canvas
         gr.endFill();
     }
 
-    checkStopMoving(curItem:Figure):boolean
+    // item is out of holst
+    checkOutOfCanvas(curItem:Figure):boolean
     {
-        // item is out of holst
         let holstRect:Rectangle = new Rectangle(0, 0, contWidth, contHeight);
         let itemRect:Rectangle = curItem.getRect();
         let outOfHolst:boolean = !(holstRect.containsRect(itemRect));
         
-        if (outOfHolst)
-            return outOfHolst;
+        return outOfHolst;
+    }
 
-        // item intersects with others
-        let itemPoints:Point[] = curItem.getPoints();
-        let intersectsOthers:boolean = false;
-        for (let p of itemPoints)
-            if (this.grid[p.y][p.x])
-            {
-                intersectsOthers = true;
-                break;
-            }
+    // item intersects with others
+    checkIntersectOvers(curItem:Figure):boolean
+    {
+        let pts:Point[] = curItem.getPoints();
 
-        return intersectsOthers;
+        for (let p of pts)
+        if (p.x < 0 || p.y < 0)
+            continue;
+        else if (this.grid[p.y][p.x])
+            return true;
+        
+        return false;
     }
 
     checkRowsForRemove():Int[]
@@ -356,13 +357,6 @@ class Canvas
 
         return [];
     }
-
-    // new spawn does not possible, Canvas is full!
-    checkGameIsOver()
-    {
-        return false;
-    }
-
 }
 
 let model = new Model();
@@ -397,15 +391,24 @@ app.ticker.add(() => {
             {
                 model.genNextItem();
                 //model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
-                model.curItem.respawn(roundToInt(Math.random() * contWidth), 0);
-                // holst is FULL
-                if (holst.checkGameIsOver())
+                model.curItem.respawn(0, 0);
+                // holst is FULL!
+                if (holst.checkIntersectOvers(model.curItem))
                 {
-
-                }
+                    console.log(`game over`);
+                    //move to highest positiion end finish
+                    if (holst.checkIntersectOvers(model.curItem)) 
+                    {
+                        model.curItem.dropByDelta(0, -1);
+                        console.log(`move ${model.curItem.x}-${model.curItem.y}`);
+                    }
+                        
+                    state = 5;
+                } else // go ahead
+                    state = 2;
+                
                 holst.render(gr, model.curItem);
-
-                state = 2;
+                
                 break;
             }        
     
@@ -420,10 +423,16 @@ app.ticker.add(() => {
     
             case 3: // check stop
             {
+                // predict next step
                 model.curItem.dropByDelta(0, 1);
-                if (holst.checkStopMoving(model.curItem)) 
+
+                if (holst.checkOutOfCanvas(model.curItem) 
+                    || holst.checkIntersectOvers(model.curItem))
                         state = 4;
+
                 else    state = 2;
+
+                // back to actual pos
                 model.curItem.dropByDelta(0, -1);
 
                 break;
@@ -443,13 +452,12 @@ app.ticker.add(() => {
 
                 break;
             }
+
+            case 5:
+            {
+                
+            }
         }
-
-        
-        
-
-        
-        
     }
 
 });
