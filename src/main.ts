@@ -308,7 +308,7 @@ class Canvas
                 this.grid[row][col] = 0;
     }
 
-    render(gr:PIXI.Graphics, curItem:Figure)
+    render(gr:PIXI.Graphics, curItem?:Figure)
     {
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
@@ -324,8 +324,8 @@ class Canvas
                     gr.endFill();
                 }
                 
-
-        this._renderItem(curItem);
+        if (curItem)
+            this._renderItem(curItem);
     }
 
     _renderItem(curItem:Figure)
@@ -372,18 +372,17 @@ class Canvas
 
         for(var row:number = 0; row < this.rowsNum; row++) 
         {
-            if (row > 0 && success)
-                r.push(row-1);
             success = true;
-
             for(var col:number = 0; col < this.colsNum; col++)
                 if(this.grid[row][col] == 0)
                 {
                     success = false;
                     break;
                 }
+
+            if (success)
+                r.push(row);
         }
-            
 
         return r;
     }
@@ -470,7 +469,7 @@ app.ticker.add(() => {
                 break;
             }
 
-            case 4: // remove rows or game over
+            case 4: // check remove rows or back to new spawn
             {
                 holst.fillFigure(model.curItem);
                 rows2del = holst.checkRowsForRemove();
@@ -479,16 +478,10 @@ app.ticker.add(() => {
                 else
                     state = 1;
 
-
-                // check row to delete (Canvas del rows and increment scores)
-                /*
-                
-                */
-
                 break;
             }
 
-            case 5:
+            case 5: // remove rows one after one and back to new spawn
             {
                 if (rows2del.length == 0)
                 {
@@ -497,12 +490,12 @@ app.ticker.add(() => {
                 }
 
                 holst.removeRow(rows2del.shift());
-                holst.render(gr, model.curItem);
+                holst.render(gr);
 
                 break;
             }
 
-            case 10:
+            case 10: // fin
             {
                 
             }
