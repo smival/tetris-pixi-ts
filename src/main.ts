@@ -265,11 +265,9 @@ class Canvas
     colsNum:number;
     rowsNum:number;
     grid:number[][];
-    containedFigures:Figure[];
 
-    constructor(colsNum, rowsNum)
+    constructor(colsNum:number, rowsNum:number)
     {
-        this.containedFigures = [];
         this.colsNum = colsNum;
         this.rowsNum = rowsNum;
         this.fillNewGrid();
@@ -284,12 +282,23 @@ class Canvas
 
     fillFigure(figure:Figure)
     {
-        this.containedFigures.push(figure);
-
         for(var row:number = 0; row < figure.shape.length; row++) 
             for(var col:number = 0; col< figure.shape[row].length; col++)
                 if (figure.shape[row][col])
-                    this.grid[row+figure.y][col+figure.x] = 1;
+                    this.grid[row+figure.y][col+figure.x] = figure.color;
+    }
+
+    removeRow(row:number)
+    {
+        this.grid.splice(row, 1);
+        this.addRowToTop();
+    }
+
+    addRowToTop()
+    {
+        this.grid.unshift([]);
+        for(var col:number = 0; col < this.colsNum; col++)
+                this.grid[0][col] = 0;
     }
 
     cleanRow(row:number)
@@ -304,8 +313,18 @@ class Canvas
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
 
-        for (let f of this.containedFigures)
-            this._renderItem(f);
+        const s = contFieldSize;
+
+        for(var row:number = 0; row < this.rowsNum; row++) 
+            for(var col:number = 0; col < this.colsNum; col++)
+                if(this.grid[row][col])
+                {
+                    gr.beginFill(this.grid[row][col], 1);
+                    gr.drawRect(col*s, row*s, s, s);
+                    gr.endFill();
+                }
+                
+
         this._renderItem(curItem);
     }
 
@@ -346,21 +365,34 @@ class Canvas
         return false;
     }
 
-    checkRowsForRemove():Int[]
+    checkRowsForRemove():number[]
     {
-        let r = [];
-        // todo
-        for(var row:number = 0; row < this.rowsNum; row++) 
-            for(var col:number = 0; col < this.colsNum; col++)
-                if(!this.grid[row][col])
-                    break;
+        let r:number[] = [];
+        let success:boolean;
 
-        return [];
+        for(var row:number = 0; row < this.rowsNum; row++) 
+        {
+            if (row > 0 && success)
+                r.push(row-1);
+            success = true;
+
+            for(var col:number = 0; col < this.colsNum; col++)
+                if(this.grid[row][col] == 0)
+                {
+                    success = false;
+                    break;
+                }
+        }
+            
+
+        return r;
     }
 }
 
 let model = new Model();
 let holst = new Canvas(contWidth, contHeight);
+
+var rows2del:number[] = [];
 var dt:number = 0;
 var steps:number = 0;
 var oldSteps:number;
@@ -403,7 +435,7 @@ app.ticker.add(() => {
                         console.log(`move ${model.curItem.x}-${model.curItem.y}`);
                     }
                         
-                    state = 5;
+                    state = 10;
                 } else // go ahead
                     state = 2;
                 
@@ -441,19 +473,36 @@ app.ticker.add(() => {
             case 4: // remove rows or game over
             {
                 holst.fillFigure(model.curItem);
-                state = 1;
-                // check move end (bottom border reached or another Fig collision)
+                rows2del = holst.checkRowsForRemove();
+                if (rows2del.length)
+                    state = 5;
+                else
+                    state = 1;
+
+
                 // check row to delete (Canvas del rows and increment scores)
-                // check the game is over! (new spawn does not possible, Canvas is full!)
-                
                 /*
-                holst.checkRowsForRemove();
+                
                 */
 
                 break;
             }
 
             case 5:
+            {
+                if (rows2del.length == 0)
+                {
+                    state = 1;
+                    break;
+                }
+
+                holst.removeRow(rows2del.shift());
+                holst.render(gr, model.curItem);
+
+                break;
+            }
+
+            case 10:
             {
                 
             }
