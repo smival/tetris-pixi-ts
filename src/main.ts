@@ -1,12 +1,14 @@
 import * as PIXI from 'pixi.js';
+import * as pixiSound from 'pixi-sound';
 
 // todo move to conf
 const contWidth:number = 15;    // 15
 const contHeight:number = 15;   // 30
 const contFieldSize:number = 24;
 const poolSize:number = 2;
-const figureDropDt:number = 100; // 1000
-const figureDropMult:number = 2;
+const figureDropDt:number = 1000;
+const figureVMult:number = 0.1;
+const figureHMult:number = 0.1;
 const scores:number[] = [0, 100, 300, 700, 1500];
 
 const app = new PIXI.Application(contWidth*contFieldSize, contHeight*contFieldSize, {backgroundColor : 0x1099bb});
@@ -16,7 +18,6 @@ document.body.appendChild(app.view);
 app.stage.addChild(gr);
 
 // describe types
-
 export type Int = number & { __int__: void };
 
 export const roundToInt = (num: number): Int => Math.round(num) as Int;
@@ -62,37 +63,27 @@ export const assertAsInt = (num: number): Int => {
   throw new Error(`Invalid Int value: ${num}`);
 };
 
-// load the texture we need
-/*
-PIXI.loader.add([{name:'bunny', url:'bunny.png', crossOrigin:'true'}]).load((loader, resources) => {
-    // This creates a texture from a 'bunny.png' image
-    const bunny = new PIXI.Sprite(resources.bunny.texture);
-
-    // Setup the position of the bunny 
-    bunny.x = app.renderer.width / 2;
-    bunny.y = app.renderer.height / 2;
-
-    // Rotate around the center
-    bunny.anchor.x = 0.5;
-    bunny.anchor.y = 0.5;
-
-    // Add the bunny to the scene we are building
-    app.stage.addChild(bunny);
-
-    // Listen for frame updates
-    app.ticker.add((deltaTime) => {
-        // each frame we spin the bunny around a bit
-        bunny.rotation += 0.01;
+// load assets
+PIXI.loader.add([
+        {name:'music', url:'music.mp3'},
+        {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
+        {name:'sSoft', url:'SFX_PieceSoftDrop.ogg'},
+        {name:'sHard', url:'SFX_PieceHardDrop.ogg'},
+        {name:'sMove', url:'SFX_PieceMoveLR.ogg'}
+            ])
+    .load((loader, resources) => 
+    {
+        resources.music.data.volume = .1;
+        resources.music.data.loop = true;
+        resources.music.data.play({loop:true, volume:1});
     });
-});
-*/
 
 class EFigureType 
 {
-    static I = [[1,0,0,0], 
-                [1,0,0,0], 
-                [1,0,0,0], 
-                [1,0,0,0]]; 
+    static I = [[1,1,1,1], 
+                [0,0,0,0], 
+                [0,0,0,0], 
+                [0,0,0,0]]; 
     static J = [[1,0,0,0], 
                 [1,1,1,0], 
                 [0,0,0,0], 
@@ -171,8 +162,11 @@ class Figure
 
     dropByDelta(dx:number, dy:number)
     {
+        //console.log(`DX: ${dx}`);
         this.x += dx;
         this.y += dy;
+
+        //console.log(`nX: ${this.x}`);
     }
 
     getRect():Rectangle
@@ -391,26 +385,126 @@ class Canvas
     }
 }
 
+function keyDown(event:KeyboardEvent)
+{
+// left
+if (event.keyCode == 37) {
+    if (state2 == 0)
+            skipFrame2 = true;
+    else    curSpeed2 = figureDropDt * figureHMult;
+
+    state2 = -1;
+ }
+ // right
+ else if (event.keyCode == 39) {
+    if (state2 == 0)
+            skipFrame2 = true;
+    else    curSpeed2 = figureDropDt * figureHMult;
+    
+    state2 = 1;
+ }
+ // down
+ else if (event.keyCode == 40) {
+    curSpeed1 = figureDropDt * figureVMult;
+    // todo move to tick
+    r.sSoft.data.play();
+ }
+ // space
+ else if (event.keyCode == 32) {
+    // rotation
+   r.sRotate.data.play();
+ }
+}
+
+function defaultLoopProps(event?:KeyboardEvent)
+{
+    state2 = 0;
+    curSpeed1 = figureDropDt;
+    curSpeed2 = figureDropDt;
+}
+
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', defaultLoopProps);
+
+
 let model = new Model();
 let holst = new Canvas(contWidth, contHeight);
 
 var rows2del:number[] = [];
-var dt:number = 0;
-var steps:number = 0;
-var oldSteps:number;
+
+var state2:number = 0;
+var dt1:number = 0;
+var steps1:number = 0;
+var fSteps1:number;
+var skipFrame1:boolean = false;
+var curSpeed1:number;
+
 var state:number = 0;
-var skipFrame:boolean = false;
+var dt2:number = 0;
+var steps2:number = 0;
+var fSteps2:number;
+var skipFrame2:boolean = false;
+var curSpeed2:number;
 
-app.ticker.add(() => {
-    
-    dt += PIXI.ticker.shared.elapsedMS;
-    oldSteps = steps;
-    steps = roundToInt(dt / figureDropDt);
+var r = PIXI.loader.resources;
 
-    if (oldSteps != steps || skipFrame)
+defaultLoopProps();
+
+
+// horizontal_flow
+app.ticker.add( () => 
+{
+    dt2 += PIXI.ticker.shared.elapsedMS;
+    fSteps2 = steps2;
+    steps2 = roundToInt(dt2 / curSpeed2);
+
+    if (fSteps2 != steps2 || skipFrame2)
     {
-        skipFrame = false;
-        oldSteps = steps;
+        skipFrame2 = false;
+        fSteps2 = steps2;
+        switch(state2)
+        {
+            case -1:
+            {
+                if (state > 1 && state < 10)
+                {
+                    model.curItem.dropByDelta(-1, 0);
+                    holst.render(gr, model.curItem);
+                    r.sMove.data.play();
+                }
+                break;
+            }
+            case 1:
+            {
+                if (state > 1 && state < 10)
+                {
+                    model.curItem.dropByDelta(1, 0);
+                    holst.render(gr, model.curItem);
+                    r.sMove.data.play();
+                }
+                break;
+            }
+
+            case 0: 
+            {
+
+                break;
+            }
+        }
+    }
+});
+
+// vertical_flow
+app.ticker.add( () => 
+{
+    dt1 += PIXI.ticker.shared.elapsedMS;
+    fSteps1 = steps1;
+    steps1 = roundToInt(dt1 / curSpeed1);
+
+    if (fSteps1 != steps1 || skipFrame1)
+    {
+        skipFrame1 = false;
+        fSteps1 = steps1;
         //console.log(`State reched: ${state}`);
 
         switch(state)
@@ -450,7 +544,7 @@ app.ticker.add(() => {
             {
                 model.curItem.dropByDelta(0, 1);
                 holst.render(gr, model.curItem);
-                skipFrame = true;
+                skipFrame1 = true;
                 state = 3;
                 break;
             }
