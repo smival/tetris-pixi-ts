@@ -21,13 +21,13 @@ See the [Game here](http://smival.com/tetris)
 
 
 ### Todos
-~~- game over~~
-~~- remove rows~~
-~~- enroll scores~~
+~~ game over~~
+~~ remove rows~~
+~~ enroll scores~~
 - keyboard controls
 -- space - rotarion
 -- arrows - moving
 - conf file
 - next figure preview
-- sound fx (opt)
+~~ - sound fx (opt)~~
 - remove rows fx (opt)

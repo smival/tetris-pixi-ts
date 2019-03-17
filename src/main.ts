@@ -22,23 +22,6 @@ export type Int = number & { __int__: void };
 
 export const roundToInt = (num: number): Int => Math.round(num) as Int;
 
-class Rectangle {
-    constructor(public x: number, public y: number, public width: number, public height: number) {}
-    contains (x:number, y:number) 
-    {
-        return this.x <= x && x <= this.x + this.width &&
-               this.y <= y && y <= this.y + this.height;
-    }
-
-    containsRect (r:Rectangle) 
-    {
-        return this.contains(r.x,           r.y) 
-            && this.contains(r.x + r.width, r.y) 
-            && this.contains(r.x + r.width, r.y + r.height) 
-            && this.contains(r.x,           r.y + r.height);
-    }
-}
-
 function getRandomColor():number
 {
     return Math.random() * 0xffffff;
@@ -63,19 +46,29 @@ export const assertAsInt = (num: number): Int => {
   throw new Error(`Invalid Int value: ${num}`);
 };
 
+class Point
+{
+    x:number;
+    y:number;
+}
+
 // load assets
 PIXI.loader.add([
         {name:'music', url:'music.mp3'},
         {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
         {name:'sSoft', url:'SFX_PieceSoftDrop.ogg'},
         {name:'sHard', url:'SFX_PieceHardDrop.ogg'},
-        {name:'sMove', url:'SFX_PieceMoveLR.ogg'}
+        {name:'sMove', url:'SFX_PieceMoveLR.ogg'},
+        {name:'sOver', url:'gameOver.ogg'},
+        {name:'sLine', url:'line.ogg'}
+        // todo: tick, 2-4 line
             ])
     .load((loader, resources) => 
     {
         resources.music.data.volume = .1;
         resources.music.data.loop = true;
-        resources.music.data.play({loop:true, volume:1});
+        resources.music.data.singleInstance = true;
+        resources.music.data.play();
     });
 
 class EFigureType 
@@ -84,30 +77,23 @@ class EFigureType
                 [0,0,0,0], 
                 [0,0,0,0], 
                 [0,0,0,0]]; 
-    static J = [[1,0,0,0], 
-                [1,1,1,0], 
-                [0,0,0,0], 
-                [0,0,0,0]]; 
-    static L = [[0,0,1,0], 
-                [1,1,1,0], 
-                [0,0,0,0], 
-                [0,0,0,0]];  
-    static O = [[1,1,0,0], 
-                [1,1,0,0], 
-                [0,0,0,0], 
-                [0,0,0,0]];  
-    static S = [[0,1,1,0], 
-                [1,1,0,0], 
-                [0,0,0,0], 
-                [0,0,0,0]];  
-    static T = [[0,1,0,0], 
-                [1,1,1,0], 
-                [0,0,0,0], 
-                [0,0,0,0]]; 
-    static Z = [[1,1,0,0], 
-                [0,1,1,0], 
-                [0,0,0,0], 
-                [0,0,0,0]];
+    static J = [[1,0,0], 
+                [1,1,1], 
+                [0,0,0]]; 
+    static L = [[0,0,1], 
+                [1,1,1], 
+                [0,0,0]];    
+    static S = [[0,1,1], 
+                [1,1,0], 
+                [0,0,0]];  
+    static T = [[0,1,0], 
+                [1,1,1], 
+                [0,0,0]]; 
+    static Z = [[1,1,0], 
+                [0,1,1], 
+                [0,0,0]];
+    static O = [[1,1], 
+                [1,1]];
 
     static all = [EFigureType.I, EFigureType.J, EFigureType.L, EFigureType.O, EFigureType.S, EFigureType.T, EFigureType.Z];
 
@@ -115,12 +101,6 @@ class EFigureType
     {
         return EFigureType.all[Math.floor(Math.random() * EFigureType.all.length)];
     }
-}
-
-class Point
-{
-    x:number;
-    y:number;
 }
 
 class Figure
@@ -162,53 +142,33 @@ class Figure
 
     dropByDelta(dx:number, dy:number)
     {
-        //console.log(`DX: ${dx}`);
         this.x += dx;
         this.y += dy;
-
-        //console.log(`nX: ${this.x}`);
-    }
-
-    getRect():Rectangle
-    {
-        let l:number = Number.MAX_VALUE;
-        let t:number = Number.MAX_VALUE;
-        let r:number = 0;
-        let b:number = 0;
-
-        for(var row:number = 0; row < this.shape.length; row++) 
-            for(var col:number = 0; col< this.shape[row].length; col++)
-                if (this.shape[row][col])
-                {
-                    if (col < l) l = col;
-                    if (row < t) t = row;
-                    if (col > r) r = col+1;
-                    if (row > b) b = row+1;
-                }
-                    
-
-        return new Rectangle(this.x+l, this.y+t, r-l, b-t);
     }
 
     getPoints():Point[]
     {
         var r:Point[] = [];
-        for(var row:number = 0; row < this.shape.length; row++) 
-            for(var col:number = 0; col< this.shape[row].length; col++)
+        const size:number = this.shape.length;
+
+        for(var row:number = 0; row < size; row++) 
+            for(var col:number = 0; col< size; col++)
                 if (this.shape[row][col])
                     r.push({x:this.x + col, y:this.y + row});
 
         return r;
     }
 
-    rotateLeft()
+    rotate()
     {
+        const size:number = this.shape.length;
+        var newShape:number[][] = new Array(size).fill(0).map(() => new Array(size).fill(0));
 
-    }
+        for(var row:number = 0; row < size; row++) 
+            for(var col:number = 0; col< size; col++)
+                newShape[row][col] = this.shape[col][(size-1) - row];
 
-    rotateRight()
-    {
-        
+        this.shape = newShape;
     }
 }
 
@@ -283,6 +243,7 @@ class Canvas
             for(var col:number = 0; col< figure.shape[row].length; col++)
                 if (figure.shape[row][col])
                     this.grid[row+figure.y][col+figure.x] = figure.color;
+                    
     }
 
     removeRow(row:number)
@@ -305,7 +266,7 @@ class Canvas
                 this.grid[row][col] = 0;
     }
 
-    render(gr:PIXI.Graphics, curItem?:Figure)
+    draw(gr:PIXI.Graphics, curItem?:Figure)
     {
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
@@ -341,23 +302,29 @@ class Canvas
     // item is out of holst
     checkOutOfCanvas(curItem:Figure):boolean
     {
-        let holstRect:Rectangle = new Rectangle(0, 0, contWidth, contHeight);
-        let itemRect:Rectangle = curItem.getRect();
-        let outOfHolst:boolean = !(holstRect.containsRect(itemRect));
-        
-        return outOfHolst;
+        let pts:Point[] = curItem.getPoints();
+        let outOfHolst:boolean;
+        for (let p of pts)
+        {
+            outOfHolst = (p.x < 0 || p.y < 0 || p.x > contWidth-1 || p.y > contHeight-1);
+            if (outOfHolst) return true;
+        }
+
+        return false;
     }
 
     // item intersects with others
-    checkIntersectOvers(curItem:Figure):boolean
+    checkIntersectOthers(curItem:Figure):boolean
     {
         let pts:Point[] = curItem.getPoints();
-
         for (let p of pts)
-        if (p.x < 0 || p.y < 0)
-            continue;
+            if (p.x < 0 || p.y < 0 || 
+                p.x > contWidth-1 || p.y > contHeight-1) 
+                    continue;
         else if (this.grid[p.y][p.x])
+        {
             return true;
+        }
         
         return false;
     }
@@ -387,33 +354,40 @@ class Canvas
 
 function keyDown(event:KeyboardEvent)
 {
-// left
-if (event.keyCode == 37) {
-    if (state2 == 0)
-            skipFrame2 = true;
-    else    curSpeed2 = figureDropDt * figureHMult;
+    // left
+    if (event.keyCode == 37) {
+        if (state2 == 0)
+                skipFrame2 = true;
+        else    curSpeed2 = figureDropDt * figureHMult;
 
-    state2 = -1;
- }
- // right
- else if (event.keyCode == 39) {
-    if (state2 == 0)
-            skipFrame2 = true;
-    else    curSpeed2 = figureDropDt * figureHMult;
-    
-    state2 = 1;
- }
- // down
- else if (event.keyCode == 40) {
-    curSpeed1 = figureDropDt * figureVMult;
-    // todo move to tick
-    r.sSoft.data.play();
- }
- // space
- else if (event.keyCode == 32) {
-    // rotation
-   r.sRotate.data.play();
- }
+        state2 = -1;
+    }
+    // right
+    else if (event.keyCode == 39) {
+        if (state2 == 0)
+                skipFrame2 = true;
+        else    curSpeed2 = figureDropDt * figureHMult;
+        
+        state2 = 1;
+    }
+    // down
+    else if (event.keyCode == 40) {
+        curSpeed1 = figureDropDt * figureVMult;
+        // todo move to tick
+        r.sSoft.data.play();
+    }
+    // up
+    else if (event.keyCode == 38) {
+        // rotation
+        model.curItem.rotate();
+        holst.draw(gr, model.curItem);
+        r.sRotate.data.play();
+    }
+    // space
+    else if (event.keyCode == 32) {
+        // hard drop
+        
+    }
 }
 
 function defaultLoopProps(event?:KeyboardEvent)
@@ -469,7 +443,7 @@ app.ticker.add( () =>
                 if (state > 1 && state < 10)
                 {
                     model.curItem.dropByDelta(-1, 0);
-                    holst.render(gr, model.curItem);
+                    holst.draw(gr, model.curItem);
                     r.sMove.data.play();
                 }
                 break;
@@ -479,7 +453,7 @@ app.ticker.add( () =>
                 if (state > 1 && state < 10)
                 {
                     model.curItem.dropByDelta(1, 0);
-                    holst.render(gr, model.curItem);
+                    holst.draw(gr, model.curItem);
                     r.sMove.data.play();
                 }
                 break;
@@ -521,11 +495,10 @@ app.ticker.add( () =>
                 //model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
                 model.curItem.respawn(0, 0);
                 // holst is FULL!
-                if (holst.checkIntersectOvers(model.curItem))
+                if (holst.checkIntersectOthers(model.curItem))
                 {
-                    console.log(`game over`);
                     //move to highest positiion end finish
-                    if (holst.checkIntersectOvers(model.curItem)) 
+                    if (holst.checkIntersectOthers(model.curItem)) 
                     {
                         model.curItem.dropByDelta(0, -1);
                         console.log(`move ${model.curItem.x}-${model.curItem.y}`);
@@ -535,7 +508,7 @@ app.ticker.add( () =>
                 } else // go ahead
                     state = 2;
                 
-                holst.render(gr, model.curItem);
+                holst.draw(gr, model.curItem);
                 
                 break;
             }        
@@ -543,7 +516,7 @@ app.ticker.add( () =>
             case 2: // move & render
             {
                 model.curItem.dropByDelta(0, 1);
-                holst.render(gr, model.curItem);
+                holst.draw(gr, model.curItem);
                 skipFrame1 = true;
                 state = 3;
                 break;
@@ -555,7 +528,7 @@ app.ticker.add( () =>
                 model.curItem.dropByDelta(0, 1);
 
                 if (holst.checkOutOfCanvas(model.curItem) 
-                    || holst.checkIntersectOvers(model.curItem))
+                    || holst.checkIntersectOthers(model.curItem))
                         state = 4;
 
                 else    state = 2;
@@ -572,6 +545,7 @@ app.ticker.add( () =>
                 rows2del = holst.checkRowsForRemove();
                 if (rows2del.length)
                 {
+                    // todo add bonus for hard drop & soft drop
                     model.curScore += scores[rows2del.length];
                     console.log(`SCORE: ${model.curScore}`);
 
@@ -592,13 +566,17 @@ app.ticker.add( () =>
                 }
 
                 holst.removeRow(rows2del.shift());
-                holst.render(gr);
+                holst.draw(gr);
+                r.sLine.data.play();
 
                 break;
             }
 
             case 10: // fin
             {
+                app.ticker.destroy();
+                r.sOver.data.play();
+                alert(`Game Over! Score: ${model.curScore}`);
                 
             }
         }
