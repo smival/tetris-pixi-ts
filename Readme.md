@@ -7,9 +7,13 @@ Typescript + pixi + webpack + hotreload
 Controls
 
 move: arrows left, right;
+
 rotate: space;
+
 hard drop: arrow up;
+
 soft drop: arrow down;
+
 
 ```sh
 npm install
@@ -31,7 +35,8 @@ See the [Game here](http://smival.com/tetris)
 ~~-remove rows~~
 ~~-enroll scores~~
 ~~-keyboard controls~~
+~~-sound fx (opt)~~
 - conf file
 - next figure preview
-~~ - sound fx (opt)~~
 - remove rows fx (opt)
+- points
