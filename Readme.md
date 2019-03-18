@@ -36,7 +36,7 @@ See the [Game here](http://smival.com/tetris)
 ~~-enroll scores~~
 ~~-keyboard controls~~
 ~~-sound fx (opt)~~
-- conf file
+~~-conf file~~
+~~-points~~
 - next figure preview
 - remove rows fx (opt)
-- points

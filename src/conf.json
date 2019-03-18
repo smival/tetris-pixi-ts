@@ -1,0 +1,12 @@
+{
+    "contWidth":15,
+    "contHeight":15,
+    "contFieldSize":24,
+    "poolSize":2,
+    "figureDropDt":1000,
+    "figureVMult":0.1,
+    "figureHMult":0.1,
+    "scores":[0, 100, 300, 700, 1500],
+    "scoreSoft":1,
+    "scoreHard":2
+}

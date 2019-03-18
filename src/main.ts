@@ -1,21 +1,22 @@
 import * as PIXI from 'pixi.js';
 import * as pixiSound from 'pixi-sound';
+var conf = require('./conf.json');
 
-// todo move to conf
-const contWidth:number = 15;    // 15
-const contHeight:number = 15;   // 30
-const contFieldSize:number = 24;
-const poolSize:number = 2;
-const figureDropDt:number = 1000;
-const figureVMult:number = 0.1;
-const figureHMult:number = 0.1;
-const scores:number[] = [0, 100, 300, 700, 1500];
-
-const app = new PIXI.Application(contWidth*contFieldSize, contHeight*contFieldSize, {backgroundColor : 0x1099bb});
+const app = new PIXI.Application(conf.contWidth*conf.contFieldSize, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
 const gr = new PIXI.Graphics();
+
+const scoreText = new PIXI.Text('Score: 0pt',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
+scoreText.x = 10;
+scoreText.y = conf.contHeight*conf.contFieldSize + 20;
+
+const linesText = new PIXI.Text('Lines: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
+linesText.x = 200;
+linesText.y = conf.contHeight*conf.contFieldSize + 20;
 
 document.body.appendChild(app.view);
 app.stage.addChild(gr);
+app.stage.addChild(scoreText);
+app.stage.addChild(linesText);
 
 // describe types
 export type Int = number & { __int__: void };
@@ -58,8 +59,8 @@ PIXI.loader.add([
         {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
         {name:'sRotateFail', url:'SFX_PieceRotateFail.ogg'},
         {name:'sMoveH', url:'SFX_PieceSoftDrop.ogg'},
-        {name:'sHard', url:'hard.ogg'},
-        {name:'sSoft', url:'soft.ogg'},
+        {name:'sHard', url:'hard.mp3'},
+        {name:'sSoft', url:'soft.mp3'},
         {name:'sMove', url:'SFX_PieceMoveLR.ogg'},
         {name:'sOver', url:'gameOver.ogg'},
         {name:'sLine', url:'line.ogg'}
@@ -189,12 +190,14 @@ class Model
 	completedItems:Array<Figure>;
     curItem:Figure;
     curScore:number;
+    curLines:number;
     
     constructor()  {}
 
     resetNewGame(poolSize:Int)
     {
         this.curScore = 0;
+        this.curLines = 0;
         this.clean();
         this._poolSize = poolSize;
         this.fillPool();
@@ -202,7 +205,7 @@ class Model
 
     fillPool()
     {
-        while(this.poolItems.length < poolSize)
+        while(this.poolItems.length < conf.poolSize)
             this.poolItems.push( new Figure(EFigureType.getRandomShape(), getRandomColor()) );
     }
 	
@@ -216,6 +219,30 @@ class Model
     {
         this.completedItems.push(this.curItem);
         this.curItem = null;
+    }
+
+    addScoreForHardDrop(linesCount:number)
+    {
+        this._addScore(conf.scoreHard * linesCount);
+    }
+
+    addScoreForSoftDrop(linesCount:number)
+    {
+        this._addScore(conf.scoreSoft * linesCount);
+    }
+
+    scoreForLines(linesCount:number)
+    {
+        model.curLines += linesCount;
+        linesText.text = `Lines: ${this.curLines}`;
+
+        this._addScore(conf.scores[linesCount]);
+    }
+
+    _addScore(total:number)
+    {
+        this.curScore += total;
+        scoreText.text = `Score: ${model.curScore}`;
     }
 
     clean() 
@@ -280,7 +307,7 @@ class Canvas
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
 
-        const s = contFieldSize;
+        const s = conf.contFieldSize;
 
         for(var row:number = 0; row < this.rowsNum; row++) 
             for(var col:number = 0; col < this.colsNum; col++)
@@ -297,7 +324,7 @@ class Canvas
 
     _renderItem(curItem:Figure)
     {
-        const s = contFieldSize;
+        const s = conf.contFieldSize;
         gr.beginFill(curItem.color, 1);
 
         for(var row:number = 0; row < curItem.getHeight(); row++) 
@@ -315,7 +342,7 @@ class Canvas
         let outOfHolst:boolean;
         for (let p of pts)
         {
-            outOfHolst = (p.x < 0 || p.y < 0 || p.x > contWidth-1 || p.y > contHeight-1);
+            outOfHolst = (p.x < 0 || p.y < 0 || p.x > conf.contWidth-1 || p.y > conf.contHeight-1);
             if (outOfHolst) return true;
         }
 
@@ -328,7 +355,7 @@ class Canvas
         let pts:Point[] = curItem.getPoints();
         for (let p of pts)
             if (p.x < 0 || p.y < 0 || 
-                p.x > contWidth-1 || p.y > contHeight-1) 
+                p.x > conf.contWidth-1 || p.y > conf.contHeight-1) 
                     continue;
         else if (this.grid[p.y][p.x])
         {
@@ -367,7 +394,7 @@ function keyDown(event:KeyboardEvent)
     if (event.keyCode == 37) {
         if (state2 == 0)
                 skipFrame2 = true;
-        else    curSpeed2 = figureDropDt * figureHMult;
+        else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
 
         state2 = -1;
     }
@@ -375,28 +402,30 @@ function keyDown(event:KeyboardEvent)
     else if (event.keyCode == 39) {
         if (state2 == 0)
                 skipFrame2 = true;
-        else    curSpeed2 = figureDropDt * figureHMult;
+        else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
         
         state2 = 1;
     }
     // down
     else if (event.keyCode == 40) {
-        curSpeed1 = figureDropDt * figureVMult;
-        // todo move to tick
-        r.sMoveH.data.play();
+        curSpeed1 = conf.figureDropDt * conf.figureVMult;
+        softMode = true;
     }
     // up
     else if (event.keyCode == 38) {
         // hard drop
         if (state == 2 || state == 3)
         {
+            let n:number = 0;
             while(1)
             {
+                n++;
                 model.curItem.dropByDelta(0, 1);
                 if (holst.checkOutOfCanvas(model.curItem) 
                     || holst.checkIntersectOthers(model.curItem))
                         break;
             }
+            model.addScoreForHardDrop(n);
             model.curItem.dropByDelta(0, -1);
             holst.draw(gr, model.curItem);
             state = 4;
@@ -424,8 +453,10 @@ function keyDown(event:KeyboardEvent)
 function defaultLoopProps(event?:KeyboardEvent)
 {
     state2 = 0;
-    curSpeed1 = figureDropDt;
-    curSpeed2 = figureDropDt;
+    softMode = false;
+    softModeN = 0;
+    curSpeed1 = conf.figureDropDt;
+    curSpeed2 = conf.figureDropDt;
 }
 
 document.addEventListener('keydown', keyDown);
@@ -433,7 +464,7 @@ document.addEventListener('keyup', defaultLoopProps);
 
 
 let model = new Model();
-let holst = new Canvas(contWidth, contHeight);
+let holst = new Canvas(conf.contWidth, conf.contHeight);
 
 var rows2del:number[] = [];
 
@@ -442,8 +473,9 @@ var dt1:number = 0;
 var steps1:number = 0;
 var fSteps1:number;
 var skipFrame1:boolean = false;
-var hardDrop:boolean = false;
 var curSpeed1:number;
+var softMode:boolean = false;
+var softModeN:number = 0;
 
 var state2:number = 0;
 var dt2:number = 0;
@@ -472,7 +504,7 @@ app.ticker.add( () =>
         {
             case -1:
             {
-                if (state > 1 && state < 4)
+                if (state > 1 && state <= 4)
                 {
                     // check out of area
                     model.curItem.dropByDelta(-1, 0);
@@ -489,7 +521,7 @@ app.ticker.add( () =>
             }
             case 1:
             {
-                if (state > 1 && state < 4)
+                if (state > 1 && state <= 4)
                 {
                     // check out of area
                     model.curItem.dropByDelta(1, 0);
@@ -531,12 +563,13 @@ app.ticker.add( () =>
         {
             case 0: // newgame
             {
-                model.resetNewGame(roundToInt(poolSize));
+                model.resetNewGame(roundToInt(conf.poolSize));
 
                 state = 1;
             }
             case 1: //spawn
             {
+                softModeN = 0;
                 model.genNextItem();
                 //model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
                 model.curItem.respawn(0, 0);
@@ -561,10 +594,17 @@ app.ticker.add( () =>
     
             case 2: // move & render
             {
+                if (softMode)
+                {
+                    softModeN++;
+                    r.sMoveH.data.play();
+                }
+                
                 model.curItem.dropByDelta(0, 1);
                 holst.draw(gr, model.curItem);
                 skipFrame1 = true;
                 state = 3;
+
                 break;
             }
     
@@ -575,6 +615,9 @@ app.ticker.add( () =>
                 if (holst.checkOutOfCanvas(model.curItem) 
                     || holst.checkIntersectOthers(model.curItem))
                     {
+                        if (softMode)
+                            model.addScoreForSoftDrop(softModeN);
+
                         state = 4;
                         r.sSoft.data.play();
                     }
@@ -593,13 +636,7 @@ app.ticker.add( () =>
                 holst.fillFigure(model.curItem);
                 rows2del = holst.checkRowsForRemove();
                 if (rows2del.length)
-                {
-                    // todo add bonus for hard drop & soft drop
-                    model.curScore += scores[rows2del.length];
-                    console.log(`SCORE: ${model.curScore}`);
-
                     state = 5;
-                }
                 else
                     state = 1;
 
@@ -608,15 +645,14 @@ app.ticker.add( () =>
 
             case 5: // remove rows one after one and back to new spawn
             {
-                if (rows2del.length == 0)
-                {
-                    state = 1;
-                    break;
-                }
+                model.scoreForLines(rows2del.length);
+                while (rows2del.length)
+                    holst.removeRow(rows2del.shift());
 
-                holst.removeRow(rows2del.shift());
                 holst.draw(gr);
                 r.sLine.data.play();
+
+                state = 1;
 
                 break;
             }
