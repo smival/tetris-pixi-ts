@@ -1,9 +1,15 @@
 # Tetris
 
 Classic tetris on Pixi.js
+
 Typescript + pixi + webpack + hotreload
 
+Controls
 
+move: arrows left, right;
+rotate: space;
+hard drop: arrow up;
+soft drop: arrow down;
 
 ```sh
 npm install
@@ -21,12 +27,10 @@ See the [Game here](http://smival.com/tetris)
 
 
 ### Todos
-~~ game over~~
-~~ remove rows~~
-~~ enroll scores~~
-- keyboard controls
--- space - rotarion
--- arrows - moving
+~~-game over~~
+~~-remove rows~~
+~~-enroll scores~~
+~~-keyboard controls~~
 - conf file
 - next figure preview
 ~~ - sound fx (opt)~~

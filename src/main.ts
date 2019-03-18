@@ -56,8 +56,10 @@ class Point
 PIXI.loader.add([
         {name:'music', url:'music.mp3'},
         {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
-        {name:'sSoft', url:'SFX_PieceSoftDrop.ogg'},
-        {name:'sHard', url:'SFX_PieceHardDrop.ogg'},
+        {name:'sRotateFail', url:'SFX_PieceRotateFail.ogg'},
+        {name:'sMoveH', url:'SFX_PieceSoftDrop.ogg'},
+        {name:'sHard', url:'hard.ogg'},
+        {name:'sSoft', url:'soft.ogg'},
         {name:'sMove', url:'SFX_PieceMoveLR.ogg'},
         {name:'sOver', url:'gameOver.ogg'},
         {name:'sLine', url:'line.ogg'}
@@ -73,8 +75,8 @@ PIXI.loader.add([
 
 class EFigureType 
 {
-    static I = [[1,1,1,1], 
-                [0,0,0,0], 
+    static I = [[0,0,0,0], 
+                [1,1,1,1], 
                 [0,0,0,0], 
                 [0,0,0,0]]; 
     static J = [[1,0,0], 
@@ -109,6 +111,7 @@ class Figure
     id:number;
     color:number;
     shape:number[][];
+    lastShape:number[][];
     x:number = 0;
     y:number = 0;
     _w:number = 0;
@@ -168,7 +171,13 @@ class Figure
             for(var col:number = 0; col< size; col++)
                 newShape[row][col] = this.shape[col][(size-1) - row];
 
+        this.lastShape = this.shape;
         this.shape = newShape;
+    }
+
+    rotateRestore()
+    {
+        this.shape = this.lastShape;
     }
 }
 
@@ -374,19 +383,41 @@ function keyDown(event:KeyboardEvent)
     else if (event.keyCode == 40) {
         curSpeed1 = figureDropDt * figureVMult;
         // todo move to tick
-        r.sSoft.data.play();
+        r.sMoveH.data.play();
     }
     // up
     else if (event.keyCode == 38) {
-        // rotation
-        model.curItem.rotate();
-        holst.draw(gr, model.curItem);
-        r.sRotate.data.play();
+        // hard drop
+        if (state == 2 || state == 3)
+        {
+            while(1)
+            {
+                model.curItem.dropByDelta(0, 1);
+                if (holst.checkOutOfCanvas(model.curItem) 
+                    || holst.checkIntersectOthers(model.curItem))
+                        break;
+            }
+            model.curItem.dropByDelta(0, -1);
+            holst.draw(gr, model.curItem);
+            state = 4;
+            r.sHard.data.play();
+        }
+        
     }
     // space
     else if (event.keyCode == 32) {
-        // hard drop
-        
+        // rotation
+        model.curItem.rotate();
+        if (holst.checkOutOfCanvas(model.curItem) 
+            || holst.checkIntersectOthers(model.curItem))
+            {
+                model.curItem.rotateRestore();
+                r.sRotateFail.data.play();
+            } else 
+            {
+                holst.draw(gr, model.curItem);
+                r.sRotate.data.play();
+            }
     }
 }
 
@@ -406,14 +437,15 @@ let holst = new Canvas(contWidth, contHeight);
 
 var rows2del:number[] = [];
 
-var state2:number = 0;
+var state:number = 0;
 var dt1:number = 0;
 var steps1:number = 0;
 var fSteps1:number;
 var skipFrame1:boolean = false;
+var hardDrop:boolean = false;
 var curSpeed1:number;
 
-var state:number = 0;
+var state2:number = 0;
 var dt2:number = 0;
 var steps2:number = 0;
 var fSteps2:number;
@@ -440,9 +472,16 @@ app.ticker.add( () =>
         {
             case -1:
             {
-                if (state > 1 && state < 10)
+                if (state > 1 && state < 4)
                 {
+                    // check out of area
                     model.curItem.dropByDelta(-1, 0);
+                    if (holst.checkOutOfCanvas(model.curItem) 
+                        || holst.checkIntersectOthers(model.curItem))
+                        {
+                            model.curItem.dropByDelta(1, 0);
+                        }
+
                     holst.draw(gr, model.curItem);
                     r.sMove.data.play();
                 }
@@ -450,9 +489,16 @@ app.ticker.add( () =>
             }
             case 1:
             {
-                if (state > 1 && state < 10)
+                if (state > 1 && state < 4)
                 {
+                    // check out of area
                     model.curItem.dropByDelta(1, 0);
+                    if (holst.checkOutOfCanvas(model.curItem) 
+                        || holst.checkIntersectOthers(model.curItem))
+                        {
+                            model.curItem.dropByDelta(-1, 0);
+                        }
+
                     holst.draw(gr, model.curItem);
                     r.sMove.data.play();
                 }
@@ -526,10 +572,13 @@ app.ticker.add( () =>
             {
                 // predict next step
                 model.curItem.dropByDelta(0, 1);
-
                 if (holst.checkOutOfCanvas(model.curItem) 
                     || holst.checkIntersectOthers(model.curItem))
+                    {
                         state = 4;
+                        r.sSoft.data.play();
+                    }
+                        
 
                 else    state = 2;
 
