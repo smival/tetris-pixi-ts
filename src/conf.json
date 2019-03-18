@@ -1,8 +1,8 @@
 {
-    "contWidth":15,
+    "contWidth":10,
     "contHeight":15,
     "contFieldSize":24,
-    "poolSize":2,
+    "poolSize":5,
     "figureDropDt":1000,
     "figureVMult":0.1,
     "figureHMult":0.1,

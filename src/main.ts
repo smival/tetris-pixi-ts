@@ -2,8 +2,11 @@ import * as PIXI from 'pixi.js';
 import * as pixiSound from 'pixi-sound';
 var conf = require('./conf.json');
 
-const app = new PIXI.Application(conf.contWidth*conf.contFieldSize, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
-const gr = new PIXI.Graphics();
+const app = new PIXI.Application(conf.contWidth*conf.contFieldSize + 150, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
+const canva = new PIXI.Graphics();
+const preview = new PIXI.Graphics();
+
+preview.x = conf.contWidth*conf.contFieldSize + 30;
 
 const scoreText = new PIXI.Text('Score: 0pt',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
 scoreText.x = 10;
@@ -14,7 +17,8 @@ linesText.x = 200;
 linesText.y = conf.contHeight*conf.contFieldSize + 20;
 
 document.body.appendChild(app.view);
-app.stage.addChild(gr);
+app.stage.addChild(canva);
+app.stage.addChild(preview);
 app.stage.addChild(scoreText);
 app.stage.addChild(linesText);
 
@@ -208,10 +212,35 @@ class Model
         while(this.poolItems.length < conf.poolSize)
             this.poolItems.push( new Figure(EFigureType.getRandomShape(), getRandomColor()) );
     }
+
+    drawPreviews()
+    {
+        // move to drawer
+        const dy:number = conf.contFieldSize;
+        const s = conf.contFieldSize;
+        let nextItemY:number = dy;
+
+        preview.clear();
+
+        for (let f of this.poolItems)
+        {
+            preview.lineStyle(1, 0xffffff, 1);
+            preview.beginFill(f.color, 1);
+
+            for(var row:number = 0; row < f.getHeight(); row++) 
+                for(var col:number = 0; col < f.getWidth(); col++)
+                    if(f.shape[row][col])
+                        preview.drawRect(f.x*s + col*s, nextItemY+f.y*s + row*s, s, s);
+
+            nextItemY += dy+dy*f.getHeight();
+            preview.endFill();
+        }
+    }
 	
     genNextItem() 
     {
         this.curItem = this.poolItems.shift();
+        this.drawPreviews();
         this.fillPool();
     }
 
@@ -306,6 +335,7 @@ class Canvas
     {
         gr.clear();
         gr.lineStyle(1, 0xffffff, 1);
+        gr.drawRect(0, 0, conf.contWidth*conf.contFieldSize, conf.contHeight*conf.contFieldSize);
 
         const s = conf.contFieldSize;
 
@@ -319,20 +349,20 @@ class Canvas
                 }
                 
         if (curItem)
-            this._renderItem(curItem);
+            this._drawItem(curItem);
     }
 
-    _renderItem(curItem:Figure)
+    _drawItem(curItem:Figure)
     {
         const s = conf.contFieldSize;
-        gr.beginFill(curItem.color, 1);
+        canva.beginFill(curItem.color, 1);
 
         for(var row:number = 0; row < curItem.getHeight(); row++) 
-        for(var col:number = 0; col < curItem.getWidth(); col++)
-            if(curItem.shape[row][col])
-                gr.drawRect(curItem.x*s + col*s, curItem.y*s + row*s, s, s);
+            for(var col:number = 0; col < curItem.getWidth(); col++)
+                if(curItem.shape[row][col])
+                    canva.drawRect(curItem.x*s + col*s, curItem.y*s + row*s, s, s);
 
-        gr.endFill();
+        canva.endFill();
     }
 
     // item is out of holst
@@ -427,7 +457,7 @@ function keyDown(event:KeyboardEvent)
             }
             model.addScoreForHardDrop(n);
             model.curItem.dropByDelta(0, -1);
-            holst.draw(gr, model.curItem);
+            holst.draw(canva, model.curItem);
             state = 4;
             r.sHard.data.play();
         }
@@ -444,7 +474,7 @@ function keyDown(event:KeyboardEvent)
                 r.sRotateFail.data.play();
             } else 
             {
-                holst.draw(gr, model.curItem);
+                holst.draw(canva, model.curItem);
                 r.sRotate.data.play();
             }
     }
@@ -514,7 +544,7 @@ app.ticker.add( () =>
                             model.curItem.dropByDelta(1, 0);
                         }
 
-                    holst.draw(gr, model.curItem);
+                    holst.draw(canva, model.curItem);
                     r.sMove.data.play();
                 }
                 break;
@@ -531,7 +561,7 @@ app.ticker.add( () =>
                             model.curItem.dropByDelta(-1, 0);
                         }
 
-                    holst.draw(gr, model.curItem);
+                    holst.draw(canva, model.curItem);
                     r.sMove.data.play();
                 }
                 break;
@@ -571,8 +601,7 @@ app.ticker.add( () =>
             {
                 softModeN = 0;
                 model.genNextItem();
-                //model.curItem.respawn(roundToInt(contWidth/2 - model.curItem.getWidth()/2), 0);
-                model.curItem.respawn(0, 0);
+                model.curItem.respawn(roundToInt(conf.contWidth/2 - model.curItem.getWidth()/2), 0);
                 // holst is FULL!
                 if (holst.checkIntersectOthers(model.curItem))
                 {
@@ -587,7 +616,7 @@ app.ticker.add( () =>
                 } else // go ahead
                     state = 2;
                 
-                holst.draw(gr, model.curItem);
+                holst.draw(canva, model.curItem);
                 
                 break;
             }        
@@ -601,7 +630,7 @@ app.ticker.add( () =>
                 }
                 
                 model.curItem.dropByDelta(0, 1);
-                holst.draw(gr, model.curItem);
+                holst.draw(canva, model.curItem);
                 skipFrame1 = true;
                 state = 3;
 
@@ -649,7 +678,7 @@ app.ticker.add( () =>
                 while (rows2del.length)
                     holst.removeRow(rows2del.shift());
 
-                holst.draw(gr);
+                holst.draw(canva);
                 r.sLine.data.play();
 
                 state = 1;

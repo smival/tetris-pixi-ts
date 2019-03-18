@@ -38,5 +38,5 @@ See the [Game here](http://smival.com/tetris)
 ~~-sound fx (opt)~~
 ~~-conf file~~
 ~~-points~~
-- next figure preview
+~~-next figure preview~~
 - remove rows fx (opt)
