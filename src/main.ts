@@ -57,6 +57,24 @@ class Point
     y:number;
 }
 
+enum EGameState
+{
+    Begin,
+    Spawn,
+    MoveDown,
+    CheckCollision,
+    CheckRows,
+    RemoveRows,
+    End
+}
+
+enum EDirection
+{
+    MoveLeft,
+    MoveRight,
+    MoveNone
+}
+
 // load assets
 PIXI.loader.add([
         {name:'music', url:'music.mp3'},
@@ -422,19 +440,19 @@ function keyDown(event:KeyboardEvent)
 {
     // left
     if (event.keyCode == 37) {
-        if (state2 == 0)
+        if (state2 == EDirection.MoveNone)
                 skipFrame2 = true;
         else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
 
-        state2 = -1;
+        state2 = EDirection.MoveLeft;
     }
     // right
     else if (event.keyCode == 39) {
-        if (state2 == 0)
+        if (state2 == EDirection.MoveNone)
                 skipFrame2 = true;
         else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
         
-        state2 = 1;
+        state2 = EDirection.MoveRight;
     }
     // down
     else if (event.keyCode == 40) {
@@ -458,7 +476,7 @@ function keyDown(event:KeyboardEvent)
             model.addScoreForHardDrop(n);
             model.curItem.dropByDelta(0, -1);
             holst.draw(canva, model.curItem);
-            state = 4;
+            state = EGameState.CheckRows;
             r.sHard.data.play();
         }
         
@@ -482,7 +500,7 @@ function keyDown(event:KeyboardEvent)
 
 function defaultLoopProps(event?:KeyboardEvent)
 {
-    state2 = 0;
+    state2 = EDirection.MoveNone;
     softMode = false;
     softModeN = 0;
     curSpeed1 = conf.figureDropDt;
@@ -492,13 +510,12 @@ function defaultLoopProps(event?:KeyboardEvent)
 document.addEventListener('keydown', keyDown);
 document.addEventListener('keyup', defaultLoopProps);
 
-
 let model = new Model();
 let holst = new Canvas(conf.contWidth, conf.contHeight);
 
 var rows2del:number[] = [];
 
-var state:number = 0;
+var state:EGameState = EGameState.Begin;
 var dt1:number = 0;
 var steps1:number = 0;
 var fSteps1:number;
@@ -532,9 +549,9 @@ app.ticker.add( () =>
         fSteps2 = steps2;
         switch(state2)
         {
-            case -1:
+            case EDirection.MoveLeft:
             {
-                if (state > 1 && state <= 4)
+                if (state > EGameState.Spawn && state <= EGameState.CheckRows)
                 {
                     // check out of area
                     model.curItem.dropByDelta(-1, 0);
@@ -549,9 +566,9 @@ app.ticker.add( () =>
                 }
                 break;
             }
-            case 1:
+            case EDirection.MoveRight:
             {
-                if (state > 1 && state <= 4)
+                if (state > EGameState.Spawn && state <= EGameState.CheckRows)
                 {
                     // check out of area
                     model.curItem.dropByDelta(1, 0);
@@ -567,7 +584,7 @@ app.ticker.add( () =>
                 break;
             }
 
-            case 0: 
+            case EDirection.MoveNone:
             {
 
                 break;
@@ -591,13 +608,13 @@ app.ticker.add( () =>
 
         switch(state)
         {
-            case 0: // newgame
+            case EGameState.Begin: // newgame
             {
                 model.resetNewGame(roundToInt(conf.poolSize));
 
-                state = 1;
+                state = EGameState.Spawn;
             }
-            case 1: //spawn
+            case EGameState.Spawn: //spawn
             {
                 softModeN = 0;
                 model.genNextItem();
@@ -612,16 +629,16 @@ app.ticker.add( () =>
                         console.log(`move ${model.curItem.x}-${model.curItem.y}`);
                     }
                         
-                    state = 10;
+                    state = EGameState.End;
                 } else // go ahead
-                    state = 2;
+                    state = EGameState.MoveDown;
                 
                 holst.draw(canva, model.curItem);
                 
                 break;
             }        
     
-            case 2: // move & render
+            case EGameState.MoveDown: // move & render
             {
                 if (softMode)
                 {
@@ -632,12 +649,12 @@ app.ticker.add( () =>
                 model.curItem.dropByDelta(0, 1);
                 holst.draw(canva, model.curItem);
                 skipFrame1 = true;
-                state = 3;
+                state = EGameState.CheckCollision;
 
                 break;
             }
     
-            case 3: // check stop
+            case EGameState.CheckCollision: // check stop
             {
                 // predict next step
                 model.curItem.dropByDelta(0, 1);
@@ -647,12 +664,12 @@ app.ticker.add( () =>
                         if (softMode)
                             model.addScoreForSoftDrop(softModeN);
 
-                        state = 4;
+                        state = EGameState.CheckRows;
                         r.sSoft.data.play();
                     }
                         
 
-                else    state = 2;
+                else    state = EGameState.MoveDown;
 
                 // back to actual pos
                 model.curItem.dropByDelta(0, -1);
@@ -660,19 +677,19 @@ app.ticker.add( () =>
                 break;
             }
 
-            case 4: // check remove rows or back to new spawn
+            case EGameState.CheckRows: // check remove rows or back to new spawn
             {
                 holst.fillFigure(model.curItem);
                 rows2del = holst.checkRowsForRemove();
                 if (rows2del.length)
-                    state = 5;
+                    state = EGameState.RemoveRows;
                 else
-                    state = 1;
+                    state = EGameState.Spawn;
 
                 break;
             }
 
-            case 5: // remove rows one after one and back to new spawn
+            case EGameState.RemoveRows: // remove rows and back to new spawn
             {
                 model.scoreForLines(rows2del.length);
                 while (rows2del.length)
@@ -681,7 +698,7 @@ app.ticker.add( () =>
                 holst.draw(canva);
                 r.sLine.data.play();
 
-                state = 1;
+                state = EGameState.Spawn;
 
                 break;
             }
