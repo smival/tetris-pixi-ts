@@ -61,8 +61,8 @@ enum EGameState
 {
     Begin,
     Spawn,
-    MoveDown,
     CheckCollision,
+    MoveDown,
     CheckRows,
     RemoveRows,
     End
@@ -414,19 +414,25 @@ function keyDown(event:KeyboardEvent)
 {
     // left
     if (event.keyCode == 37) {
-        if (state2 == EDirection.MoveNone)
-                skipFrame2 = true;
-        else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
+        if (validLRStates.indexOf(state) != -1)
+        {
+            if (state2 == EDirection.MoveNone)
+                    skipFrame2 = true;
+            else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
 
-        state2 = EDirection.MoveLeft;
+            state2 = EDirection.MoveLeft;
+        }
     }
     // right
     else if (event.keyCode == 39) {
-        if (state2 == EDirection.MoveNone)
-                skipFrame2 = true;
-        else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
-        
-        state2 = EDirection.MoveRight;
+        if (validLRStates.indexOf(state) != -1)
+        {
+            if (state2 == EDirection.MoveNone)
+                    skipFrame2 = true;
+            else    curSpeed2 = conf.figureDropDt * conf.figureHMult;
+            
+            state2 = EDirection.MoveRight;
+        }
     }
     // down
     else if (event.keyCode == 40) {
@@ -436,7 +442,7 @@ function keyDown(event:KeyboardEvent)
     // up
     else if (event.keyCode == 38) {
         // hard drop
-        if (state == 2 || state == 3)
+        if (state == EGameState.MoveDown || state == EGameState.CheckCollision)
         {
             let n:number = 0;
             while(1)
@@ -451,6 +457,7 @@ function keyDown(event:KeyboardEvent)
             model.curItem.dropByDelta(0, -1);
             holst.draw(canva, model.curItem);
             state = EGameState.CheckRows;
+            skipFrame1 = true;
             r.sHard.data.play();
         }
         
@@ -488,6 +495,10 @@ let model = new Model();
 let holst = new Canvas(conf.contWidth, conf.contHeight);
 
 var rows2del:number[] = [];
+const validLRStates:EGameState[] = [
+    EGameState.CheckCollision,
+    EGameState.MoveDown
+];
 
 var state:EGameState = EGameState.Begin;
 var dt1:number = 0;
@@ -498,7 +509,7 @@ var curSpeed1:number;
 var softMode:boolean = false;
 var softModeN:number = 0;
 
-var state2:number = 0;
+var state2:number;
 var dt2:number = 0;
 var steps2:number = 0;
 var fSteps2:number;
@@ -525,36 +536,32 @@ app.ticker.add( () =>
         {
             case EDirection.MoveLeft:
             {
-                if (state > EGameState.Spawn && state <= EGameState.CheckRows)
-                {
-                    // check out of area
-                    model.curItem.dropByDelta(-1, 0);
-                    if (holst.checkOutOfCanvas(model.curItem) 
-                        || holst.checkIntersectOthers(model.curItem))
-                        {
-                            model.curItem.dropByDelta(1, 0);
-                        }
+                // check out of area
+                model.curItem.dropByDelta(-1, 0);
+                if (holst.checkOutOfCanvas(model.curItem) 
+                    || holst.checkIntersectOthers(model.curItem))
+                    {
+                        model.curItem.dropByDelta(1, 0);
+                    }
 
-                    holst.draw(canva, model.curItem);
-                    r.sMove.data.play();
-                }
+                holst.draw(canva, model.curItem);
+                r.sMove.data.play();
+                
                 break;
             }
             case EDirection.MoveRight:
             {
-                if (state > EGameState.Spawn && state <= EGameState.CheckRows)
-                {
-                    // check out of area
-                    model.curItem.dropByDelta(1, 0);
-                    if (holst.checkOutOfCanvas(model.curItem) 
-                        || holst.checkIntersectOthers(model.curItem))
-                        {
-                            model.curItem.dropByDelta(-1, 0);
-                        }
+                // check out of area
+                model.curItem.dropByDelta(1, 0);
+                if (holst.checkOutOfCanvas(model.curItem) 
+                    || holst.checkIntersectOthers(model.curItem))
+                    {
+                        model.curItem.dropByDelta(-1, 0);
+                    }
 
-                    holst.draw(canva, model.curItem);
-                    r.sMove.data.play();
-                }
+                holst.draw(canva, model.curItem);
+                r.sMove.data.play();
+                
                 break;
             }
 
@@ -578,7 +585,7 @@ app.ticker.add( () =>
     {
         skipFrame1 = false;
         fSteps1 = steps1;
-        //console.log(`State reched: ${state}`);
+        console.log(`State reched: ${state}`);
 
         switch(state)
         {
@@ -598,38 +605,17 @@ app.ticker.add( () =>
                 {
                     //move to highest positiion end finish
                     while (holst.checkIntersectOthers(model.curItem)) 
-                    {
                         model.curItem.dropByDelta(0, -1);
-                        console.log(`move ${model.curItem.x}-${model.curItem.y}`);
-                    }
-                        
+                    
                     state = EGameState.End;
-                } else // go ahead
-                {
-                    state = EGameState.CheckCollision;
                     skipFrame1 = true;
-                }                    
+                } else // go ahead
+                    state = EGameState.CheckCollision;   
                 
                 holst.draw(canva, model.curItem);
                 
                 break;
             }        
-    
-            case EGameState.MoveDown: // move & render
-            {
-                if (softMode)
-                {
-                    softModeN++;
-                    r.sMoveH.data.play();
-                }
-                
-                model.curItem.dropByDelta(0, 1);
-                holst.draw(canva, model.curItem);
-                skipFrame1 = true;
-                state = EGameState.CheckCollision;
-
-                break;
-            }
     
             case EGameState.CheckCollision: // check stop
             {
@@ -650,9 +636,25 @@ app.ticker.add( () =>
 
                 // back to actual pos
                 model.curItem.dropByDelta(0, -1);
+                skipFrame1 = true;
 
                 break;
             }
+
+            case EGameState.MoveDown: // move & render
+            {
+                if (softMode)
+                {
+                    softModeN++;
+                    r.sMoveH.data.play();
+                }
+                
+                model.curItem.dropByDelta(0, 1);
+                holst.draw(canva, model.curItem);
+                state = EGameState.CheckCollision;
+
+                break;
+            }            
 
             case EGameState.CheckRows: // check remove rows or back to new spawn
             {
@@ -661,7 +663,11 @@ app.ticker.add( () =>
                 if (rows2del.length)
                     state = EGameState.RemoveRows;
                 else
+                {
                     state = EGameState.Spawn;
+                    skipFrame1 = true;
+                }
+                    
 
                 break;
             }
