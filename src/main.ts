@@ -96,38 +96,6 @@ PIXI.loader.add([
         resources.music.data.play();
     });
 
-class EFigureType 
-{
-    static I = [[0,0,0,0], 
-                [1,1,1,1], 
-                [0,0,0,0], 
-                [0,0,0,0]]; 
-    static J = [[1,0,0], 
-                [1,1,1], 
-                [0,0,0]]; 
-    static L = [[0,0,1], 
-                [1,1,1], 
-                [0,0,0]];    
-    static S = [[0,1,1], 
-                [1,1,0], 
-                [0,0,0]];  
-    static T = [[0,1,0], 
-                [1,1,1], 
-                [0,0,0]]; 
-    static Z = [[1,1,0], 
-                [0,1,1], 
-                [0,0,0]];
-    static O = [[1,1], 
-                [1,1]];
-
-    static all = [EFigureType.I, EFigureType.J, EFigureType.L, EFigureType.O, EFigureType.S, EFigureType.T, EFigureType.Z];
-
-    static getRandomShape():number[][]
-    {
-        return EFigureType.all[Math.floor(Math.random() * EFigureType.all.length)];
-    }
-}
-
 class Figure
 {
     static lastId:number = 0;
@@ -228,7 +196,13 @@ class Model
     fillPool()
     {
         while(this.poolItems.length < conf.poolSize)
-            this.poolItems.push( new Figure(EFigureType.getRandomShape(), getRandomColor()) );
+            this.poolItems.push( new Figure(this._getRandomShape(), getRandomColor()) );
+    }
+
+    _getRandomShape():number[][]
+    {
+        var keys = Object.keys(conf.tetrominos)
+        return conf.tetrominos[keys[ keys.length * Math.random() << 0]];
     }
 
     drawPreviews()
@@ -623,7 +597,7 @@ app.ticker.add( () =>
                 if (holst.checkIntersectOthers(model.curItem))
                 {
                     //move to highest positiion end finish
-                    if (holst.checkIntersectOthers(model.curItem)) 
+                    while (holst.checkIntersectOthers(model.curItem)) 
                     {
                         model.curItem.dropByDelta(0, -1);
                         console.log(`move ${model.curItem.x}-${model.curItem.y}`);
@@ -631,7 +605,10 @@ app.ticker.add( () =>
                         
                     state = EGameState.End;
                 } else // go ahead
-                    state = EGameState.MoveDown;
+                {
+                    state = EGameState.CheckCollision;
+                    skipFrame1 = true;
+                }                    
                 
                 holst.draw(canva, model.curItem);
                 
@@ -703,7 +680,7 @@ app.ticker.add( () =>
                 break;
             }
 
-            case 10: // fin
+            case EGameState.End: // fin
             {
                 app.ticker.destroy();
                 r.sOver.data.play();
