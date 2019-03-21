@@ -63,7 +63,7 @@ class Game
         // load assets
         PIXI.loader.add([
             {name:'bg', url:'bg.jpg'},
-            {name:'music', url:'music.mp3'},
+            {name:'music', url:'music.ogg'},
             {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
             {name:'sRotateFail', url:'SFX_PieceRotateFail.ogg'},
             {name:'sMoveH', url:'SFX_PieceSoftDrop.ogg'},
