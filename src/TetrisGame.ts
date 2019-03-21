@@ -11,10 +11,13 @@ var conf = require('./conf.json');
 
 class Game
 {
+    background:PIXI.Sprite;
     app:PIXI.Application;
     mainLayer:PIXI.Graphics;
     previewLayer:PIXI.Graphics;
+    containerName:string;
 
+    levelText:PIXI.Text;
     scoreText:PIXI.Text;
     linesText:PIXI.Text;
 
@@ -52,48 +55,14 @@ class Game
     curItem:Figure;
     curLines:number;
     curScore:number;
+    curLevel:number;
 
     constructor(containerSelector?:string)
     {
-        this.factory = new TetrominoFactory(conf.tetrominos);
-        this.holst = new Canvas(conf.contWidth, conf.contHeight);
-        this.drawer = new Drawer(conf.contWidth, conf.contHeight, conf.contFieldSize);
-
-        this.app = new PIXI.Application(conf.contWidth*conf.contFieldSize + 150, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
-        this.mainLayer = new PIXI.Graphics();
-        this.previewLayer = new PIXI.Graphics();
-        
-        this.previewLayer.x = conf.contWidth*conf.contFieldSize + 30;
-        
-        this.scoreText = new PIXI.Text('Score: 0pt',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
-        this.scoreText.x = 10;
-        this.scoreText.y = conf.contHeight*conf.contFieldSize + 20;
-        
-        this.linesText = new PIXI.Text('Lines: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
-        this.linesText.x = 200;
-        this.linesText.y = conf.contHeight*conf.contFieldSize + 20;
-        
-        let defaultContainer:boolean = true;
-        if (containerSelector)
-        {
-            let element = document.querySelector(containerSelector);
-            if (element) 
-            {
-                element.appendChild(this.app.view);
-                defaultContainer = false;
-            }
-        }
-            
-        if (defaultContainer)
-            document.body.appendChild(this.app.view);
-
-        this.app.stage.addChild(this.mainLayer);
-        this.app.stage.addChild(this.previewLayer);
-        this.app.stage.addChild(this.scoreText);
-        this.app.stage.addChild(this.linesText);
-
+        this.containerName = containerSelector;
         // load assets
         PIXI.loader.add([
+            {name:'bg', url:'bg.jpg'},
             {name:'music', url:'music.mp3'},
             {name:'sRotate', url:'SFX_PieceRotateLR.ogg'},
             {name:'sRotateFail', url:'SFX_PieceRotateFail.ogg'},
@@ -111,6 +80,55 @@ class Game
         });
     }
 
+    iniLayout()
+    {
+        this.factory = new TetrominoFactory(conf.tetrominos);
+        this.holst = new Canvas(conf.contWidth, conf.contHeight);
+        this.drawer = new Drawer(conf.contWidth, conf.contHeight, conf.contFieldSize);
+
+        this.app = new PIXI.Application(conf.contWidth*conf.contFieldSize + 150, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
+        this.mainLayer = new PIXI.Graphics();
+        this.previewLayer = new PIXI.Graphics();
+        
+        this.previewLayer.x = conf.contWidth*conf.contFieldSize + 30;
+        
+        this.levelText = new PIXI.Text('Level: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
+        this.levelText.x = 10;
+        this.levelText.y = conf.contHeight*conf.contFieldSize + 20;
+
+        this.linesText = new PIXI.Text('Lines: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
+        this.linesText.x = 120;
+        this.linesText.y = conf.contHeight*conf.contFieldSize + 20;
+
+        this.scoreText = new PIXI.Text('Score: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
+        this.scoreText.x = 230;
+        this.scoreText.y = conf.contHeight*conf.contFieldSize + 20;
+    
+        
+        let defaultContainer:boolean = true;
+        if (this.containerName)
+        {
+            let element = document.querySelector(this.containerName);
+            if (element) 
+            {
+                element.appendChild(this.app.view);
+                defaultContainer = false;
+            }
+        }
+            
+        if (defaultContainer)
+            document.body.appendChild(this.app.view);
+
+        this.background = new PIXI.Sprite(PIXI.loader.resources.bg.texture);
+
+        this.app.stage.addChild(this.background);
+        this.app.stage.addChild(this.mainLayer);
+        this.app.stage.addChild(this.previewLayer);
+        this.app.stage.addChild(this.levelText);
+        this.app.stage.addChild(this.scoreText);
+        this.app.stage.addChild(this.linesText);
+    }
+
     startGame()
     {
         this.requestToStart = true;
@@ -119,6 +137,7 @@ class Game
         this.curItem = null;
         this.curScore = 0;
         this.curLines = 0;
+        this.curLevel = 0;
         this.hState = EDirection.MoveNone;
         this.softMode = false;
         this.softModeLen = 0;
@@ -133,9 +152,10 @@ class Game
         this.removeListeners();
         this.stopMusic();
 
-        this.requestToStart = false;
+        this.requestToStart = false; 
         if (dispose)
         {
+            this.readyToStart = false;
             if (this.app) this.app.destroy(true, true);
         }
     }
@@ -155,7 +175,11 @@ class Game
     private startGameInternal()
     {
         if (this.readyToStart && this.requestToStart)
+        {
+            this.iniLayout();
             this.addListeners();
+        }
+            
     } 
 
     private addListeners()
@@ -212,7 +236,7 @@ class Game
 
     private addScoreForSoftDrop(linesCount:number)
     {
-        this.addScore(conf.scoreSoft * linesCount);
+        this.addScore(conf.scoreSoft * 10 * linesCount);
     }
 
     private addScoreForLines(linesCount:number)
@@ -226,10 +250,30 @@ class Game
     private addScore(total:number)
     {
         this.curScore += total;
-        this.scoreText.text = `Score: ${this.curScore}pt`;
+        this.scoreText.text = `Score: ${this.curScore}`;
+
+        let newLevel:number = roundToInt(this.curScore / 1000);
+        if (newLevel > this.curLevel)
+            this.levelUp(newLevel);
     }
 
-    private keyDown(event:KeyboardEvent)
+    private levelUp(level:number)
+    {
+        this.curLevel = level;
+        this.levelText.text = `Level: ${this.curLevel}`;
+        
+    }
+
+    private resetVSpeed()
+    {
+        this.vCurSpeed = conf.figureDropDt;
+        let n = this.curLevel;
+        while(n--)
+            this.vCurSpeed *= 0.9;
+
+    }
+
+    private keyDown(event:KeyboardEvent) 
     {
         // left
         if (event.keyCode == 37) {
@@ -255,7 +299,8 @@ class Game
         }
         // down
         else if (event.keyCode == 40) {
-            this.vCurSpeed = conf.figureDropDt * conf.figureVMult;
+            this.resetVSpeed();
+            this.vCurSpeed *= conf.figureVMult;
             this.softMode = true;
         }
         // up
@@ -303,8 +348,8 @@ class Game
         this.hState = EDirection.MoveNone;
         this.softMode = false;
         this.softModeLen = 0;
-        this.vCurSpeed = conf.figureDropDt;
         this.hCurSpeed = conf.figureDropDt;
+        this.resetVSpeed();
     }
 
     // horizontal_flow
