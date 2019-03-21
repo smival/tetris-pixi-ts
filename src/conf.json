@@ -2,7 +2,7 @@
     "contWidth":10,
     "contHeight":15,
     "contFieldSize":24,
-    "poolSize":5,
+    "poolSize":2,
     "figureDropDt":1000,
     "figureVMult":0.1,
     "figureHMult":0.1,

@@ -31,12 +31,13 @@ See the [Game here](http://smival.com/tetris)
 
 
 ### Todos
-~~-game over~~
-~~-remove rows~~
-~~-enroll scores~~
-~~-keyboard controls~~
-~~-sound fx (opt)~~
-~~-conf file~~
-~~-points~~
-~~-next figure preview~~
-- remove rows fx (opt)
+- [x] game over
+- [x] remove rows
+- [x] enroll scores
+- [x] keyboard controls
+- [x] sound fx (opt)
+- [x] conf file
+- [x] points
+- [x] next figure preview
+- [ ] pause mode
+- [ ] remove rows fx (opt)

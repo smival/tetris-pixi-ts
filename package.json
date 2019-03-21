@@ -1,6 +1,6 @@
 {
   "name": "tetris",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Valentin Smirnov",
   "scripts": {
     "tsc": "./node_modules/typescript/bin/tsc",
