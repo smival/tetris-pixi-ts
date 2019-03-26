@@ -4,7 +4,7 @@ import * as snd from 'pixi-sound';
 import {EGameState, EDirection, roundToInt} from './Types';
 import Canvas from './Canvas';
 import TetrominoFactory from './TetrominoFactory';
-import Figure from './Tetromino'
+import Tetromino from './Tetromino'
 import Drawer from './Drawer';
 
 var conf = require('./conf.json');
@@ -52,7 +52,7 @@ class Game
     private readyToStart:boolean = false;
     private requestToStart:boolean = false;
 
-    curItem:Figure;
+    curItem:Tetromino;
     curLines:number;
     curScore:number;
     curLevel:number;

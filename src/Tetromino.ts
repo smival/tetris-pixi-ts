@@ -1,22 +1,15 @@
 import {Point} from './Types';
 
-export default class Figure
+export default class Tetromino
 {
-    
-    id:number;
-    color:number;
-    shape:number[][];
     lastShape:number[][];
     x:number = 0;
     y:number = 0;
     size:number;
 
-    constructor(id:number, newPerfectShape:number[][], color:number)
+    constructor(public id:number, public shape:number[][], public color:number)
     {
-        this.id = id;
-        this.color = color;
-        this.shape = newPerfectShape;
-        this.size = newPerfectShape.length;
+        this.size = shape.length;
     }
 
     respawn(x:number, y:number)

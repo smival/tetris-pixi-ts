@@ -1,14 +1,14 @@
-import Figure from './Tetromino';
+import Tetromino from './Tetromino';
 
 export default class TetrominoFactory
 {
     private lastId:number = 0;
     private poolSize:number;
-    private poolItems:Array<Figure>;
+    private poolItems:Array<Tetromino>;
     private itemsRaw:any[];
 
-    current:Figure;
-    others:Figure[];
+    current:Tetromino;
+    others:Tetromino[];
     
     constructor(itemsRaw:any[])  
     {
@@ -32,7 +32,7 @@ export default class TetrominoFactory
     private fillPool()
     {
         while(this.poolItems.length < this.poolSize)
-            this.poolItems.push( new Figure(this.lastId++, this.getRandomShape(), this.getRandomColor()) );
+            this.poolItems.push( new Tetromino(this.lastId++, this.getRandomShape(), this.getRandomColor()) );
     }
 
     private getRandomColor():number
