@@ -1,4 +1,5 @@
 import Tetromino from './Tetromino';
+import Validator from './TetrominoValidator';
 
 export default class TetrominoPool
 {
@@ -32,17 +33,22 @@ export default class TetrominoPool
     private fillPool()
     {
         while(this.poolItems.length < this.poolSize)
-            this.poolItems.push( new Tetromino(this.lastId++, this.getRandomShape(), this.getRandomColor()) );
+        {
+            let item = Validator.validate(this.getRandomTetromino(), true, this.itemsRaw.minBlocksNeed);
+            this.poolItems.push( new Tetromino(this.lastId++, item.shape, this.getRandomColor()) );
+        }
+            
     }
 
+    // todo use external ColorProvider & TetrominoProvider
     private getRandomColor():number
     {
         return Math.random() * 0xffffff;
     }
 
-    private getRandomShape():number[][]
+    private getRandomTetromino():any
     {
         var keys = Object.keys(this.itemsRaw.list);
-        return this.itemsRaw.list[keys[ keys.length * Math.random() << 0]].shape;
+        return this.itemsRaw.list[keys[ keys.length * Math.random() << 0]];
     }
 }

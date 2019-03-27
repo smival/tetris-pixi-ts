@@ -7,7 +7,7 @@ import TetrominoPool from './TetrominosPool';
 import Tetromino from './Tetromino'
 import Drawer from './Drawer';
 
-const conf = require('./conf.json');
+const defaultConf = require('./conf.json');
 
 class Game
 {
@@ -130,10 +130,10 @@ class Game
         this.app.stage.addChild(this.linesText);
     }
 
-    startGame(extConf?:any)
+    startGame(customConf?:any)
     {
         this.requestToStart = true;
-        this.curConf = {...conf, ...extConf};
+        this.curConf = {...defaultConf, ...customConf};
 
         this.vState = EGameState.Begin;
         this.curItem = null;
