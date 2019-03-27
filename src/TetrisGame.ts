@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import * as snd from 'pixi-sound';
 
-import {EGameState, EDirection, roundToInt} from './Types';
+import {EGameState, EDirection, ITetrisConf, roundToInt} from './Types';
 import Canvas from './Canvas';
 import TetrominoPool from './TetrominosPool';
 import Tetromino from './Tetromino'
@@ -24,7 +24,7 @@ class Game
     factory:TetrominoPool;
     holst:Canvas;
     drawer:Drawer;
-    curConf:any;
+    curConf:ITetrisConf;
 
     rows2del:number[] = [];
     validLRStates:EGameState[] = [

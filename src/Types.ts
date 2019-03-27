@@ -21,6 +21,29 @@ export const assertAsInt = (num: number): Int => {
   throw new Error(`Invalid Int value: ${num}`);
 };
 
+export interface ITetrisConf {
+  contWidth: number;
+  contHeight: number;
+  contFieldSize: number;
+  poolSize: number;
+  figureDropDt: number;
+  figureVMult: number;
+  figureHMult: number;
+  scores?: (number)[] | null;
+  scoreSoft: number;
+  scoreHard: number;
+  tetrominos: ITetroConf;
+}
+export interface ITetroConf {
+  minBlocksNeed: number;
+  list?: (ITetroEntityConf)[] | null;
+}
+export interface ITetroEntityConf {
+  name?: string | null;
+  shape?: ((number)[] | null)[] | null;
+  color?: string | null;
+}
+
 export class Point
 {
     x:number;

@@ -7,14 +7,14 @@ export default class Tetromino
     y:number = 0;
     size:number;
 
-    constructor(public id:number, public shape:number[][], public color:number)
+    constructor(public id:number, public name:string, public shape:number[][], public color:number)
     {
         this.size = shape.length;
     }
 
     respawn(x:number, y:number)
     {
-        console.log(`fig ${this.id} new spawn: ${x}-${y}`);
+        console.log(`fig ${this.id}-${this.name} new spawn: ${x}-${y}`);
         this.x = x;
         this.y = y;
     }

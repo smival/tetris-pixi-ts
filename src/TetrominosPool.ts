@@ -1,17 +1,19 @@
 import Tetromino from './Tetromino';
 import Validator from './TetrominoValidator';
+import {ITetroConf, ITetroEntityConf} from './Types';
+const Color = require('color');
 
 export default class TetrominoPool
 {
     private lastId:number = 0;
     private poolSize:number;
     private poolItems:Array<Tetromino>;
-    private itemsRaw:any;
+    private itemsRaw:ITetroConf;
 
     current:Tetromino;
     others:Tetromino[];
     
-    constructor(itemsRaw:any)  
+    constructor(itemsRaw:ITetroConf)  
     {
         this.itemsRaw = itemsRaw;
     }
@@ -34,8 +36,16 @@ export default class TetrominoPool
     {
         while(this.poolItems.length < this.poolSize)
         {
-            let item = Validator.validate(this.getRandomTetromino(), true, this.itemsRaw.minBlocksNeed);
-            this.poolItems.push( new Tetromino(this.lastId++, item.shape, this.getRandomColor()) );
+            let itemRaw:ITetroEntityConf = this.getRandomTetromino();
+            let item:ITetroEntityConf = Validator.validate(itemRaw, this.itemsRaw.minBlocksNeed);
+
+            let itemColor:number;
+            if (item.color)
+                itemColor = Color(item.color).rgbNumber();
+            else
+                itemColor = this.getRandomColor();
+
+            this.poolItems.push( new Tetromino(this.lastId++, item.name, item.shape, itemColor) );
         }
             
     }
@@ -46,7 +56,7 @@ export default class TetrominoPool
         return Math.random() * 0xffffff;
     }
 
-    private getRandomTetromino():any
+    private getRandomTetromino():ITetroEntityConf
     {
         var keys = Object.keys(this.itemsRaw.list);
         return this.itemsRaw.list[keys[ keys.length * Math.random() << 0]];
