@@ -9,8 +9,8 @@
     "scores":[0, 100, 300, 700, 1500],
     "scoreSoft":1,
     "scoreHard":2,
+    "minBlocksNeed":4,
     "tetrominos":{
-        "minBlocksNeed":4,
         "list":[
         {    "name":"I",
                 "shape":  

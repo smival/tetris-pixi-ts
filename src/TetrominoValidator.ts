@@ -3,7 +3,7 @@ import {ITetroEntityConf} from './Types';
 
 export default class TetrominoValidator
 {
-    static validate(d:ITetroEntityConf, minBlocks:number = -1):any
+    static validateTetroConf(d:ITetroEntityConf, minBlocks:number = -1):any
     {
         // check squareMatrix
         // get size for new matrix

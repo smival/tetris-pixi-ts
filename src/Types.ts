@@ -32,10 +32,10 @@ export interface ITetrisConf {
   scores?: (number)[] | null;
   scoreSoft: number;
   scoreHard: number;
+  minBlocksNeed: number;
   tetrominos: ITetroConf;
 }
 export interface ITetroConf {
-  minBlocksNeed: number;
   list?: (ITetroEntityConf)[] | null;
 }
 export interface ITetroEntityConf {

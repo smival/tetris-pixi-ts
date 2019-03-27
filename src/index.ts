@@ -9,3 +9,6 @@ app.startGame(conf);
 
 // override props
 //app.startGame( {"contWidth":15, "contHeight":20} );
+
+// tetros should have min 8 blocks
+// app.startGame({minBlocksNeed:8});

@@ -1,5 +1,4 @@
 import Tetromino from './Tetromino';
-import Validator from './TetrominoValidator';
 import {ITetroConf, ITetroEntityConf} from './Types';
 const Color = require('color');
 
@@ -36,9 +35,7 @@ export default class TetrominoPool
     {
         while(this.poolItems.length < this.poolSize)
         {
-            let itemRaw:ITetroEntityConf = this.getRandomTetromino();
-            let item:ITetroEntityConf = Validator.validate(itemRaw, this.itemsRaw.minBlocksNeed);
-
+            let item:ITetroEntityConf = this.getRandomTetromino();
             let itemColor:number;
             if (item.color)
                 itemColor = Color(item.color).rgbNumber();

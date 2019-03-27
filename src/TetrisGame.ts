@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import * as snd from 'pixi-sound';
 
-import {EGameState, EDirection, ITetrisConf, roundToInt} from './Types';
+import Validator from './TetrominoValidator';
+import {EGameState, EDirection, ITetrisConf, roundToInt, ITetroEntityConf} from './Types';
 import Canvas from './Canvas';
 import TetrominoPool from './TetrominosPool';
 import Tetromino from './Tetromino'
@@ -47,8 +48,7 @@ class Game
     hFSteps:number;
     hSkipFrame:boolean = false;
     hCurSpeed:number;
-
-    r = PIXI.loader.resources;
+    r:any;
 
     private readyToStart:boolean = false;
     private requestToStart:boolean = false;
@@ -76,6 +76,7 @@ class Game
                 ])
         .load((loader, resources) => 
         {
+            this.r = PIXI.loader.resources;
             this.readyToStart = true;
             this.startGameInternal();
         });
@@ -134,6 +135,10 @@ class Game
     {
         this.requestToStart = true;
         this.curConf = {...defaultConf, ...customConf};
+        this.curConf.tetrominos.list.forEach(tetro => {
+            Validator.validateTetroConf(tetro, this.curConf.minBlocksNeed);
+        });
+            
 
         this.vState = EGameState.Begin;
         this.curItem = null;
