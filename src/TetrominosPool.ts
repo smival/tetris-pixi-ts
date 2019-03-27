@@ -1,16 +1,16 @@
 import Tetromino from './Tetromino';
 
-export default class TetrominoFactory
+export default class TetrominoPool
 {
     private lastId:number = 0;
     private poolSize:number;
     private poolItems:Array<Tetromino>;
-    private itemsRaw:any[];
+    private itemsRaw:any;
 
     current:Tetromino;
     others:Tetromino[];
     
-    constructor(itemsRaw:any[])  
+    constructor(itemsRaw:any)  
     {
         this.itemsRaw = itemsRaw;
     }
@@ -42,7 +42,7 @@ export default class TetrominoFactory
 
     private getRandomShape():number[][]
     {
-        var keys = Object.keys(this.itemsRaw);
-        return this.itemsRaw[keys[ keys.length * Math.random() << 0]];
+        var keys = Object.keys(this.itemsRaw.list);
+        return this.itemsRaw.list[keys[ keys.length * Math.random() << 0]].shape;
     }
 }

@@ -3,11 +3,11 @@ import * as snd from 'pixi-sound';
 
 import {EGameState, EDirection, roundToInt} from './Types';
 import Canvas from './Canvas';
-import TetrominoFactory from './TetrominoFactory';
+import TetrominoPool from './TetrominosPool';
 import Tetromino from './Tetromino'
 import Drawer from './Drawer';
 
-var conf = require('./conf.json');
+const conf = require('./conf.json');
 
 class Game
 {
@@ -21,9 +21,10 @@ class Game
     scoreText:PIXI.Text;
     linesText:PIXI.Text;
 
-    factory:TetrominoFactory;
+    factory:TetrominoPool;
     holst:Canvas;
     drawer:Drawer;
+    curConf:any;
 
     rows2del:number[] = [];
     validLRStates:EGameState[] = [
@@ -82,27 +83,27 @@ class Game
 
     iniLayout()
     {
-        this.factory = new TetrominoFactory(conf.tetrominos);
-        this.holst = new Canvas(conf.contWidth, conf.contHeight);
-        this.drawer = new Drawer(conf.contWidth, conf.contHeight, conf.contFieldSize);
+        this.factory = new TetrominoPool(this.curConf.tetrominos);
+        this.holst = new Canvas(this.curConf.contWidth, this.curConf.contHeight);
+        this.drawer = new Drawer(this.curConf.contWidth, this.curConf.contHeight, this.curConf.contFieldSize);
 
-        this.app = new PIXI.Application(conf.contWidth*conf.contFieldSize + 150, conf.contHeight*conf.contFieldSize + 50, {backgroundColor : 0x1099bb});
+        this.app = new PIXI.Application(this.curConf.contWidth*this.curConf.contFieldSize + 150, this.curConf.contHeight*this.curConf.contFieldSize + 50, {backgroundColor : 0x1099bb});
         this.mainLayer = new PIXI.Graphics();
         this.previewLayer = new PIXI.Graphics();
         
-        this.previewLayer.x = conf.contWidth*conf.contFieldSize + 30;
+        this.previewLayer.x = this.curConf.contWidth*this.curConf.contFieldSize + 30;
         
         this.levelText = new PIXI.Text('Level: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
         this.levelText.x = 10;
-        this.levelText.y = conf.contHeight*conf.contFieldSize + 20;
+        this.levelText.y = this.curConf.contHeight*this.curConf.contFieldSize + 20;
 
         this.linesText = new PIXI.Text('Lines: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
         this.linesText.x = 120;
-        this.linesText.y = conf.contHeight*conf.contFieldSize + 20;
+        this.linesText.y = this.curConf.contHeight*this.curConf.contFieldSize + 20;
 
         this.scoreText = new PIXI.Text('Score: 0',{fontFamily : 'Arial', fontSize: 24, fill : 0xffffff, align : 'center'});
         this.scoreText.x = 230;
-        this.scoreText.y = conf.contHeight*conf.contFieldSize + 20;
+        this.scoreText.y = this.curConf.contHeight*this.curConf.contFieldSize + 20;
     
         
         let defaultContainer:boolean = true;
@@ -129,9 +130,10 @@ class Game
         this.app.stage.addChild(this.linesText);
     }
 
-    startGame()
+    startGame(extConf?:any)
     {
         this.requestToStart = true;
+        this.curConf = {...conf, ...extConf};
 
         this.vState = EGameState.Begin;
         this.curItem = null;
@@ -141,8 +143,8 @@ class Game
         this.hState = EDirection.MoveNone;
         this.softMode = false;
         this.softModeLen = 0;
-        this.vCurSpeed = conf.figureDropDt;
-        this.hCurSpeed = conf.figureDropDt;
+        this.vCurSpeed = this.curConf.figureDropDt;
+        this.hCurSpeed = this.curConf.figureDropDt;
 
         this.startGameInternal();
     }
@@ -231,12 +233,12 @@ class Game
 
     private addScoreForHardDrop(linesCount:number)
     {
-        this.addScore(conf.scoreHard * linesCount);
+        this.addScore(this.curConf.scoreHard * linesCount);
     }
 
     private addScoreForSoftDrop(linesCount:number)
     {
-        this.addScore(conf.scoreSoft * 10 * linesCount);
+        this.addScore(this.curConf.scoreSoft * 10 * linesCount);
     }
 
     private addScoreForLines(linesCount:number)
@@ -244,7 +246,7 @@ class Game
         this.curLines += linesCount;
         this.linesText.text = `Lines: ${this.curLines}`;
 
-        this.addScore(conf.scores[linesCount]);
+        this.addScore(this.curConf.scores[linesCount]);
     }
 
     private addScore(total:number)
@@ -266,7 +268,7 @@ class Game
 
     private resetVSpeed()
     {
-        this.vCurSpeed = conf.figureDropDt;
+        this.vCurSpeed = this.curConf.figureDropDt;
         let n = this.curLevel;
         while(n--)
             this.vCurSpeed *= 0.9;
@@ -281,7 +283,7 @@ class Game
             {
                 if (this.hState == EDirection.MoveNone)
                         this.hSkipFrame = true;
-                else    this.hCurSpeed = conf.figureDropDt * conf.figureHMult;
+                else    this.hCurSpeed = this.curConf.figureDropDt * this.curConf.figureHMult;
 
                 this.hState = EDirection.MoveLeft;
             }
@@ -292,7 +294,7 @@ class Game
             {
                 if (this.hState == EDirection.MoveNone)
                         this.hSkipFrame = true;
-                else    this.hCurSpeed = conf.figureDropDt * conf.figureHMult;
+                else    this.hCurSpeed = this.curConf.figureDropDt * this.curConf.figureHMult;
                 
                 this.hState = EDirection.MoveRight;
             }
@@ -300,7 +302,7 @@ class Game
         // down
         else if (event.keyCode == 40) {
             this.resetVSpeed();
-            this.vCurSpeed *= conf.figureVMult;
+            this.vCurSpeed *= this.curConf.figureVMult;
             this.softMode = true;
         }
         // up
@@ -348,7 +350,7 @@ class Game
         this.hState = EDirection.MoveNone;
         this.softMode = false;
         this.softModeLen = 0;
-        this.hCurSpeed = conf.figureDropDt;
+        this.hCurSpeed = this.curConf.figureDropDt;
         this.resetVSpeed();
     }
 
@@ -422,7 +424,7 @@ class Game
             {
                 case EGameState.Begin: // newgame
                 {
-                    this.factory.resetNewGame(conf.poolSize);
+                    this.factory.resetNewGame(this.curConf.poolSize);
 
                     this.vState = EGameState.Spawn;
                 }
@@ -433,7 +435,7 @@ class Game
                     this.curItem = this.factory.current;
                     this.drawer.drawPreviews(this.previewLayer, this.factory.others);
                     // drawPreviews();
-                    this.curItem.respawn(roundToInt(conf.contWidth/2 - this.curItem.size/2), 0);
+                    this.curItem.respawn(roundToInt(this.curConf.contWidth/2 - this.curItem.size/2), 0);
                     // holst is FULL!
                     if (this.holst.checkIntersectOthers(this.curItem))
                     {
