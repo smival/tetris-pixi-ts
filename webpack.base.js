@@ -30,19 +30,12 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
 
-  devtool: 'source-map',
 // https://webpack.js.org/guides/hot-module-replacement/
   plugins: [
 
     new CleanWebpackPlugin({ verbose:true }),
     new CopyWebpackPlugin([{ from: 'assets' }]),
-    new HtmlWebpackPlugin({  title: 'Tetrix ts pixi webpack'  }),
+    new HtmlWebpackPlugin({  title: `Tetris v${JSON.stringify(require('./package.json').version)} (ts pixi webpack)`  }),
     new webpack.HotModuleReplacementPlugin()
-  ],
-
-  devServer: {
-      inline: true,
-      hot: true,
-      contentBase: './dist'
-  }
+  ]
 };

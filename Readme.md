@@ -2,9 +2,11 @@
 
 Classic tetris on Pixi.js
 
+See the [Game here](http://smival.com/tetris)
+
 Typescript + pixi + webpack + hotreload
 
-Controls
+## Controls
 
 move: arrows left, right;
 
@@ -14,20 +16,19 @@ hard drop: arrow up;
 
 soft drop: arrow down;
 
+## How to use sources
 
 ```sh
 npm install
 ```
-run local server
+run local server (http://localhost:8080/)
 ```sh
-npm run start
+npm start
 ```
 build project
 ```sh
 npm run build
 ```
-
-See the [Game here](http://smival.com/tetris)
 
 
 ### Todos
@@ -37,6 +38,7 @@ See the [Game here](http://smival.com/tetris)
 - [x] keyboard controls
 - [x] sound fx (opt)
 - [x] conf file
+- [x] conf validation
 - [x] points
 - [x] next figure preview
 - [ ] pause mode
