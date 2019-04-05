@@ -46,8 +46,35 @@ export interface ITetroEntityConf {
 
 export class Point
 {
-    x:number;
-    y:number;
+    constructor(public x:number, public y:number) {}
+
+    getSideNeiпbors():Point[]
+    {
+      return [new Point(this.x, this.y-1), 
+              new Point(this.x+1, this.y), 
+              new Point(this.x, this.y+1), 
+              new Point(this.x-1, this.y)
+      ];
+    }
+
+    getCornerNeiпbors():Point[]
+    {
+      return [new Point(this.x+1, this.y-1), 
+              new Point(this.x+1, this.y+1), 
+              new Point(this.x-1, this.y+1), 
+              new Point(this.x-1, this.y-1)
+      ];
+    }
+
+    toString():String
+    {
+      return `{x:${this.x},y:${this.y}}`;
+    }
+
+    clone():Point
+    {
+      return new Point(this.x, this.y);
+    }
 }
 
 export enum EGameState

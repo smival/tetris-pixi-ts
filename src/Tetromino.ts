@@ -33,7 +33,7 @@ export default class Tetromino
         for(var row:number = 0; row < size; row++) 
             for(var col:number = 0; col< size; col++)
                 if (this.shape[row][col])
-                    r.push({x:this.x + col, y:this.y + row});
+                    r.push(new Point(this.x + col, this.y + row));
 
         return r;
     }

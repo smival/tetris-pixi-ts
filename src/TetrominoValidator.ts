@@ -16,7 +16,7 @@ export default class TetrominoValidator
             for(var col:number = 0; d.shape[row][col] != undefined; col++)
                 if (d.shape[row][col])
                 {
-                    blocks.push( {x:col, y:row} );
+                    blocks.push( new Point(col, row) );
                     if (row > maxRow) maxRow = row;
                     if (col > maxCol) maxCol = col;
                 }
