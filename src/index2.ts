@@ -278,7 +278,7 @@ function getNextColor():number
     return r;
 }
 
-const colors:number[] = [0xb28c72, 0x204747, 0xe215c8, 0xf9557e, 0x233845, 0x4863b2, 0x6331a9, 0xe249c5, 0x4de9a0, 0xd3f542, 0x0cb2da, 0x08d0000];
+const colors:number[] = [0xb28c72, 0x204747, 0xe215c8, 0xf9557e, 0xfffaaa, 0x4863b2, 0x6331a9, 0xe249c5, 0x4de9a0, 0xd3f542, 0x0cb2da, 0x8d0000];
 let app = new PIXI.Application(1800, 8000, {backgroundColor : 0xDDDDDD});
 let mainLayer = new PIXI.Graphics();
 let dx:number = 0;
@@ -312,6 +312,7 @@ while (n--)
 {
     prevList = newList.concat();
     newList = [];
+    dc = 0;
 
     console.log(`start ${whiteList[whiteList.length-1].basePts.length+1} blocks making ...`);
     
