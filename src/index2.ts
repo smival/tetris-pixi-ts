@@ -1,18 +1,10 @@
-import Tetromino from "./Tetromino";
 import {Point, roundToInt} from './Types';
 import * as PIXI from 'pixi.js';
-import * as snd from 'pixi-sound';
-
-let app = new PIXI.Application(1800, 8000, {backgroundColor : 0xDDDDDD});
-let mainLayer = new PIXI.Graphics();
-let dx:number = 0;
-let dy:number = 0;
-document.body.appendChild(app.view);
-app.stage.addChild(mainLayer);
 
 class PoliminoBase
 {
     basePts:Point[];
+    color:number;
     turns?:string;
 }
 
@@ -217,7 +209,7 @@ function shapeExists(turns:string):boolean
     return false;
 }
 
-function shapeHasReflection(turns:string):PoliminoBase
+function getReflectionFromExists(turns:string):PoliminoBase
 {
     for (let base of newList)
         if (base.turns && turnsEqual(base.turns, turns.split('').reverse().join('') ) )
@@ -226,7 +218,7 @@ function shapeHasReflection(turns:string):PoliminoBase
     return null;
 }
 
-function absPoints(pts:Point[])
+function makeAbsPoints(pts:Point[])
 {
     let r = pts.map(obj => { return obj.clone() } );
 
@@ -248,90 +240,15 @@ function absPoints(pts:Point[])
     return r;
 }
 
-let maxSize:number = 3;     // TODO matrix size restriction
-let n:number = 10;   
-let totalTestsCount:number = 0;
-let fTime:number = new Date().getTime();
-
-let whiteList:PoliminoBase[];
-let newList:PoliminoBase[];
-let prevList:PoliminoBase[];
-let perimeterPts:Point[];
-let blocksCount:number;
-
-whiteList = [ {basePts: [new Point(0, 0)] } ]; // single monomino
-newList = whiteList.concat();
-prevList = [];
-
-draw(whiteList[0].basePts);
-dx = 20;
-dy = 0;
-
-n--;
-while (n--)
-{
-    prevList = newList.concat();
-    newList = [];
-
-    //console.log(`start ${whiteList[whiteList.length-1].basePts.length+1} blocks making ...`);
-    
-
-    for (let t of prevList)
-    {
-        let newBasePts:Point[];
-        let newTurns:string;
-        let isExists:boolean;
-        let hasReflection:PoliminoBase;
-        perimeterPts = getPerimeterPoints(t.basePts);
-
-        // candidate points for new Item
-        for (let newPt of perimeterPts)
-        {
-            newBasePts = t.basePts.concat(newPt);
-            newTurns = getTurnsString(getAllPoints(newBasePts));
-            isExists = shapeExists(newTurns);
-            hasReflection = shapeHasReflection(newTurns);
-            if (!isExists)
-            {
-                newList.push( {basePts: absPoints(newBasePts), turns: newTurns} );
-                draw(absPoints(newBasePts));
-
-                if (hasReflection)
-                {
-                    // todo
-                    //console.warn(`replica`);
-                }
-            }
-            
-
-            //console.log(`${!isExists ? 'NEW!' : '\t'} figure ${absPoints(newBasePts)} turns: ${newTurns} l:${newTurns.length}`);
-        }
-    }
-
-    let testsCount:number = prevList.length * perimeterPts.length;
-    blocksCount = newList[0].basePts.length;
-    totalTestsCount += testsCount;
-    dx += blocksCount*10;
-    dy = 0;
-
-    console.log(`result for ${blocksCount} blocks, new shapes added: ${newList.length} after ${testsCount} tests\n\n`);
-    whiteList = whiteList.concat(newList);
-}
-
-console.log(`total tests: ${totalTestsCount}`);
-console.log(`total minos: ${whiteList.length}`);
-console.log(`total times: ${ new Date().getTime() - fTime}ms`);
-
-
-function draw(pts:Point[])
+function draw(mino:PoliminoBase)
 {
     const s = 10;
     let maxY:number = 0;
     let y:number;
 
-    for (let p of pts)
+    for (let p of mino.basePts)
     {
-        mainLayer.beginFill(0x8d0000);
+        mainLayer.beginFill(mino.color);
         mainLayer.drawRect(dx+p.x*s, dy + p.y*s, s, s);
         mainLayer.endFill();
 
@@ -349,3 +266,94 @@ function draw(pts:Point[])
     }
         
 }
+
+function getNextColor():number
+{
+    let r = colors[dc];
+
+    dc++;
+    if (dc > colors.length-1)
+        dc=0;
+
+    return r;
+}
+
+const colors:number[] = [0xb28c72, 0x204747, 0xe215c8, 0xf9557e, 0x233845, 0x4863b2, 0x6331a9, 0xe249c5, 0x4de9a0, 0xd3f542, 0x0cb2da, 0x08d0000];
+let app = new PIXI.Application(1800, 8000, {backgroundColor : 0xDDDDDD});
+let mainLayer = new PIXI.Graphics();
+let dx:number = 0;
+let dy:number = 0;
+let dc:number = 0;
+
+let maxSize:number = 3;     // TODO matrix size restriction
+let n:number = 5;
+let totalTestsCount:number = 0;
+let fTime:number = new Date().getTime();
+
+let whiteList:PoliminoBase[];
+let newList:PoliminoBase[];
+let prevList:PoliminoBase[];
+let perimeterPts:Point[];
+let blocksCount:number;
+
+document.body.appendChild(app.view);
+app.stage.addChild(mainLayer);
+
+whiteList = [ {basePts: [new Point(0, 0)], color:getNextColor() } ]; // single monomino
+newList = whiteList.concat();
+prevList = [];
+
+draw(whiteList[0]);
+dx = 20;
+dy = 0;
+
+n--;
+while (n--)
+{
+    prevList = newList.concat();
+    newList = [];
+
+    console.log(`start ${whiteList[whiteList.length-1].basePts.length+1} blocks making ...`);
+    
+    // try to add new single block to each side of each Polimino from (n-1) generation
+    for (let t of prevList)
+    {
+        let newBasePts:Point[];
+        let newTurns:string;
+        let newMino:PoliminoBase;
+        let isExists:boolean;
+        let reflection:PoliminoBase;
+        perimeterPts = getPerimeterPoints(t.basePts);
+
+        // candidate points for new Item
+        for (let newPt of perimeterPts)
+        {
+            newBasePts = t.basePts.concat(newPt);
+            newTurns = getTurnsString(getAllPoints(newBasePts));
+            isExists = shapeExists(newTurns);
+            
+            if (!isExists)
+            {
+                reflection = getReflectionFromExists(newTurns);
+                newMino = {basePts: makeAbsPoints(newBasePts), turns: newTurns, color:reflection ? reflection.color : getNextColor()};
+                newList.push(newMino);
+                draw(newMino);
+            }
+            
+            console.log(`${!isExists ? 'NEW!' : '\t'} figure ${newBasePts} turns: ${newTurns} l:${newTurns.length}`);
+        }
+    }
+
+    let testsCount:number = prevList.length * perimeterPts.length;
+    blocksCount = newList[0].basePts.length;
+    totalTestsCount += testsCount;
+    dx += blocksCount*10;
+    dy = 0;
+
+    console.log(`result for ${blocksCount} blocks, new shapes added: ${newList.length} after ${testsCount} tests\n\n`);
+    whiteList = whiteList.concat(newList);
+}
+
+console.log(`total tests: ${totalTestsCount}`);
+console.log(`total minos: ${whiteList.length}`);
+console.log(`total times: ${ new Date().getTime() - fTime}ms`);
