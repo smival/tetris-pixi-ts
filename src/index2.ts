@@ -242,7 +242,7 @@ function makeAbsPoints(pts:Point[])
 
 function draw(mino:PoliminoBase)
 {
-    const s = 10;
+    const s = 5;
     let maxY:number = 0;
     let y:number;
 
@@ -252,16 +252,16 @@ function draw(mino:PoliminoBase)
         mainLayer.drawRect(dx+p.x*s, dy + p.y*s, s, s);
         mainLayer.endFill();
 
-        y = p.y*s+2*s;
+        y = p.y*s+s;
         if (y>maxY) maxY = y;
         
     }
 
     dy += maxY;
     
-    if (dy >= app.view.height)
+    if (dy >= 750)
     {
-        dx += blocksCount*10;
+        dx += (blocksCount-1)*5;
         dy = 0;
     }
         
@@ -279,14 +279,14 @@ function getNextColor():number
 }
 
 const colors:number[] = [0xb28c72, 0x204747, 0xe215c8, 0xf9557e, 0xfffaaa, 0x4863b2, 0x6331a9, 0xe249c5, 0x4de9a0, 0xd3f542, 0x0cb2da, 0x8d0000];
-let app = new PIXI.Application(1800, 8000, {backgroundColor : 0xDDDDDD});
+let app = new PIXI.Application(1280, 800, {backgroundColor : 0});
 let mainLayer = new PIXI.Graphics();
 let dx:number = 0;
 let dy:number = 0;
 let dc:number = 0;
 
 let maxSize:number = 3;     // TODO matrix size restriction
-let n:number = 5;
+let n:number = 8;
 let totalTestsCount:number = 0;
 let fTime:number = new Date().getTime();
 
@@ -348,7 +348,7 @@ while (n--)
     let testsCount:number = prevList.length * perimeterPts.length;
     blocksCount = newList[0].basePts.length;
     totalTestsCount += testsCount;
-    dx += blocksCount*10;
+    dx += blocksCount*5;
     dy = 0;
 
     console.log(`result for ${blocksCount} blocks, new shapes added: ${newList.length} after ${testsCount} tests\n\n`);

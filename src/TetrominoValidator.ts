@@ -1,5 +1,6 @@
 import {Point} from './Types';
 import {ITetroEntityConf} from './Types';
+import Utils from './Utils';
 
 export default class TetrominoValidator
 {
@@ -9,7 +10,6 @@ export default class TetrominoValidator
         // get size for new matrix
         let maxRow:number = 0;
         let maxCol:number = 0;
-        let newSize:number = 0;
         let blocks:Point[] = [];
 
         for(var row:number = 0; d.shape[row] != undefined; row++) 
@@ -21,15 +21,7 @@ export default class TetrominoValidator
                     if (col > maxCol) maxCol = col;
                 }
         
-        newSize = Math.max(maxRow, maxCol) + 1;
-        // empty matrix
-        let grid = [];
-        for(var row:number = 0; row < newSize; row++) 
-        {
-            grid[row] = [];
-            for(var col:number = 0; col < newSize; col++)
-                grid[row][col] = 0;
-        }
+        let grid = Utils.matrixEmpty( Math.max(maxRow, maxCol) + 1 );
 
         // fill matrix
         while (blocks.length)

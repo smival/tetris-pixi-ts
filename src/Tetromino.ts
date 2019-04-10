@@ -1,4 +1,5 @@
 import {Point} from './Types';
+import Utils from './Utils';
 
 export default class Tetromino
 {
@@ -27,15 +28,7 @@ export default class Tetromino
 
     getPoints():Point[]
     {
-        var r:Point[] = [];
-        const size:number = this.shape.length;
-
-        for(var row:number = 0; row < size; row++) 
-            for(var col:number = 0; col< size; col++)
-                if (this.shape[row][col])
-                    r.push(new Point(this.x + col, this.y + row));
-
-        return r;
+        return Utils.pointsFromMatrix(this.shape, new Point(this.x, this.y));
     }
 
     rotate()
