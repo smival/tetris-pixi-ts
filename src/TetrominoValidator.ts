@@ -21,7 +21,7 @@ export default class TetrominoValidator
                     if (col > maxCol) maxCol = col;
                 }
         
-        let grid = Utils.matrixEmpty( Math.max(maxRow, maxCol) + 1 );
+        let grid = Utils.getMatrixEmpty( Math.max(maxRow, maxCol) + 1 );
 
         // fill matrix
         while (blocks.length)

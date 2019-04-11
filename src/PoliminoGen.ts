@@ -3,8 +3,8 @@ import Utils from './Utils';
 
 export class PoliminoMeta
 {
-    size():number { return this.basePts == null ? 0 : this.basePts.length; };
-    constructor (public basePts:Point[], public color:number, public turns?:string) {}
+    blocksCount():number { return this.basePts == null ? 0 : this.basePts.length; };
+    constructor (public basePts:Point[], public color:number, public size:number, public turns?:string) {}
 }
 
 
@@ -14,60 +14,85 @@ export default class PoliminoGen
     static fTime:number;
     
     static n:number;
+    static matrixSize:number;
     static whiteList:PoliminoMeta[];
     static newList:PoliminoMeta[];
     static prevList:PoliminoMeta[];
     static perimeterPts:Point[];
-    static blocksCount:number;
+    static curBlocksCount:number;
+    static maxBlocksCount:number;
 
     static makePoliminosByBlocksCount(blocksCount:number, matrixSize?:number):PoliminoMeta[]
     {
         this.fTime = new Date().getTime();
-        this.whiteList = [ new PoliminoMeta([new Point(0, 0)], this.getNextColor()) ]; // single monomino
+        this.whiteList = [ new PoliminoMeta([new Point(0, 0)], this.getNextColor(), 1) ]; // single monomino
         this.newList = this.whiteList.concat();
         this.prevList = [];
         this.n = roundToInt(blocksCount)-1;
+        this.matrixSize = !matrixSize ? blocksCount : matrixSize;
+        this.curBlocksCount = 1;
+        this.maxBlocksCount = this.matrixSize * this.matrixSize;
 
         while (this.n--)
         {
+            // matrix size restriction
+            if (this.curBlocksCount == this.maxBlocksCount)
+                break;
+
             this.prevList = this.newList.concat();
             this.newList = [];
 
-            console.log(`start ${this.whiteList[this.whiteList.length-1].basePts.length+1} blocks making ...`);
+            console.log(`start ${this.curBlocksCount+1} blocks making ...`);
             
             // try to add new single block to each side of each Polimino from (n-1) generation
             for (let t of this.prevList)
             {
                 let newBasePts:Point[];
+                let absBasePts:Point[];
                 let newTurns:string;
                 let newMino:PoliminoMeta;
                 let isExists:boolean;
                 let reflection:PoliminoMeta;
+                let size:number;
+                let newLabel:string;
                 this.perimeterPts = this.getPerimeterPoints(t.basePts);
 
                 // candidate points for new Item
                 for (let newPt of this.perimeterPts)
                 {
+                    newLabel = null;
                     newBasePts = t.basePts.concat(newPt);
                     newTurns = this.getTurnsString(this.getAllPoints(newBasePts));
                     isExists = this.shapeExists(newTurns);
                     
                     if (!isExists)
                     {
-                        reflection = this.getReflectionFromExists(newTurns);
-                        newMino = new PoliminoMeta(Utils.pointsToAbs(newBasePts), reflection ? reflection.color : this.getNextColor(), newTurns);
+                        absBasePts = Utils.changePointsToAbs(newBasePts);   // move points to positive coords
+                        size = Utils.getMatrixSizeByPoints(absBasePts);
+                        // matrix size restriction
+                        if (size > this.matrixSize)
+                            continue;
+
+                        reflection = this.getReflectionFromExists(newTurns); // return reflextion item or null
+                        newMino = new PoliminoMeta(
+                            absBasePts, 
+                            reflection ? reflection.color : this.getNextColor(), 
+                            size, 
+                            newTurns
+                        );
                         this.newList.push(newMino);
+                        newLabel = 'NEW! ';                        
                     }
                     
-                    console.log(`${!isExists ? 'NEW!' : '\t'} figure ${newBasePts} turns: ${newTurns} l:${newTurns.length}`);
+                    console.log(`${newLabel ? newLabel : '\t'} figure ${newBasePts} turns: ${newTurns} l:${newTurns.length}`);
                 }
             }
 
             let testsCount:number = this.prevList.length * this.perimeterPts.length;
-            this.blocksCount = this.newList[0].basePts.length;
+            this.curBlocksCount = this.newList[0].basePts.length;
             this.totalTestsCount += testsCount;
 
-            console.log(`result for ${this.blocksCount} blocks, new shapes added: ${this.newList.length} after ${testsCount} tests\n\n`);
+            console.log(`result for ${this.curBlocksCount} blocks, new shapes added: ${this.newList.length} after ${testsCount} tests\n\n`);
             this.whiteList = this.whiteList.concat(this.newList);
         }
 

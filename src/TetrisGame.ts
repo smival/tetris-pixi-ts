@@ -18,6 +18,9 @@ class Game
     previewLayer:PIXI.Graphics;
     containerName:string;
 
+    appW:number;
+    appH:number;
+
     levelText:PIXI.Text;
     scoreText:PIXI.Text;
     linesText:PIXI.Text;
@@ -88,7 +91,9 @@ class Game
         this.holst = new Canvas(this.curConf.contWidth, this.curConf.contHeight);
         this.drawer = new Drawer(this.curConf.contWidth, this.curConf.contHeight, this.curConf.contFieldSize);
 
-        this.app = new PIXI.Application(this.curConf.contWidth*this.curConf.contFieldSize + 150, this.curConf.contHeight*this.curConf.contFieldSize + 50, {backgroundColor : 0x1099bb});
+        this.appW = this.curConf.contWidth*this.curConf.contFieldSize + 150;
+        this.appH = this.curConf.contHeight*this.curConf.contFieldSize + 50;
+        this.app = new PIXI.Application(this.appW, this.appH, {backgroundColor : 0x1099bb});
         this.mainLayer = new PIXI.Graphics();
         this.previewLayer = new PIXI.Graphics();
         
@@ -121,7 +126,7 @@ class Game
         if (defaultContainer)
             document.body.appendChild(this.app.view);
 
-        this.background = new PIXI.Sprite(PIXI.loader.resources.bg.texture);
+        this.background = new PIXI.extras.TilingSprite(PIXI.loader.resources.bg.texture, this.appW, this.appH);
 
         this.app.stage.addChild(this.background);
         this.app.stage.addChild(this.mainLayer);

@@ -23,11 +23,11 @@ const formHtml:string =
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
-        <option value="4" selected>4</option>
+        <option value="4">4</option>
         <option value="5">5</option>
         <option value="6">6</option>
         <option value="7">7</option>
-        <option value="8">8</option>
+        <option value="8" selected>8</option>
     </select>
     </p>
 
@@ -70,10 +70,12 @@ function state1(e)
 {
     e.preventDefault();
 
-    customConf.contWidth = getDropDownIntValue('selectWidth');
-    customConf.contHeight = getDropDownIntValue('selectHeight');
     let blocksCount = getDropDownIntValue('selectBlocks');
     let matrixSize:number = getDropDownIntValue('selectMatrix');
+
+    customConf.contWidth = getDropDownIntValue('selectWidth');
+    customConf.contHeight = getDropDownIntValue('selectHeight');
+    customConf.minBlocksNeed = -1;
 
     document.body.onload = alert.bind(this, 'yo');
     document.body.innerHTML = processHtml;
@@ -86,7 +88,7 @@ function state1(e)
     customConf.tetrominos = {};
     customConf.tetrominos.list = [];
     for (let o of items)
-        customConf.tetrominos.list.push({name:'', shape:Utils.matrixFromPoints(o.basePts, o.size()), color:o.color})
+        customConf.tetrominos.list.push({name:'', shape:Utils.getMatrixFromPoints(o.basePts, o.blocksCount()), color:o.color})
 
     state2();
 }

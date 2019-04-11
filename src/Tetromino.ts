@@ -28,7 +28,7 @@ export default class Tetromino
 
     getPoints():Point[]
     {
-        return Utils.pointsFromMatrix(this.shape, new Point(this.x, this.y));
+        return Utils.getPointsFromMatrix(this.shape, new Point(this.x, this.y));
     }
 
     rotate()
