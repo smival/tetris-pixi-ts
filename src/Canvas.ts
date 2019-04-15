@@ -1,4 +1,4 @@
-import Figure from './Tetromino';
+import Polimino from './Polimino';
 import {Point} from './Types';
 
 export default class Canvas
@@ -21,7 +21,7 @@ export default class Canvas
             this.cleanRow(row);
     }
 
-    fillFigure(figure:Figure)
+    fillFigure(figure:Polimino)
     {
         for(var row:number = 0; row < figure.shape.length; row++) 
             for(var col:number = 0; col< figure.shape[row].length; col++)
@@ -51,7 +51,7 @@ export default class Canvas
     }
 
     // item is out of holst
-    checkOutOfCanvas(curItem:Figure):boolean
+    checkOutOfCanvas(curItem:Polimino):boolean
     {
         let pts:Point[] = curItem.getPoints();
         let outOfHolst:boolean;
@@ -65,7 +65,7 @@ export default class Canvas
     }
 
     // item intersects with others
-    checkIntersectOthers(curItem:Figure):boolean
+    checkIntersectOthers(curItem:Polimino):boolean
     {
         let pts:Point[] = curItem.getPoints();
         for (let p of pts)

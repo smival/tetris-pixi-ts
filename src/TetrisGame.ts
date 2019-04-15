@@ -1,12 +1,12 @@
 import * as PIXI from 'pixi.js';
 import * as snd from 'pixi-sound';
 
-import Validator from './TetrominoValidator';
 import {EGameState, EDirection, ITetrisConf, roundToInt, ITetroEntityConf} from './Types';
 import Canvas from './Canvas';
-import TetrominoPool from './TetrominosPool';
-import Tetromino from './Tetromino'
+import PoliminoPool from './PoliminosPool';
+import Polimino from './Polimino'
 import Drawer from './Drawer';
+import Utils from './Utils';
 
 const defaultConf = require('./conf.json');
 
@@ -25,7 +25,7 @@ class Game
     scoreText:PIXI.Text;
     linesText:PIXI.Text;
 
-    factory:TetrominoPool;
+    factory:PoliminoPool;
     holst:Canvas;
     drawer:Drawer;
     curConf:ITetrisConf;
@@ -56,7 +56,7 @@ class Game
     private readyToStart:boolean = false;
     private requestToStart:boolean = false;
 
-    curItem:Tetromino;
+    curItem:Polimino;
     curLines:number;
     curScore:number;
     curLevel:number;
@@ -87,7 +87,7 @@ class Game
 
     iniLayout()
     {
-        this.factory = new TetrominoPool(this.curConf.tetrominos);
+        this.factory = new PoliminoPool(this.curConf.tetrominos);
         this.holst = new Canvas(this.curConf.contWidth, this.curConf.contHeight);
         this.drawer = new Drawer(this.curConf.contWidth, this.curConf.contHeight, this.curConf.contFieldSize);
 
@@ -141,7 +141,16 @@ class Game
         this.requestToStart = true;
         this.curConf = {...defaultConf, ...customConf};
         this.curConf.tetrominos.list.forEach(tetro => {
-            Validator.validateTetroConf(tetro, this.curConf.minBlocksNeed);
+
+            Utils.resolveMatrix(tetro.shape);
+
+            const minBlocks = this.curConf.minBlocksNeed;
+            if (minBlocks)
+            {
+                let curBlocks = Utils.getMatrixDefinedCellsCount(tetro.shape);
+                if (curBlocks < minBlocks)
+                    throw new Error(`A shape has no enough blocks, need ${minBlocks}, defined ${curBlocks}`);
+            }
         });
             
 

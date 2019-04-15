@@ -16,6 +16,19 @@ export default class Utils
         return Math.max(maxRow, maxCol) + 1 ;
     }
 
+    static getMatrixDefinedCellsCount(matrix:number[][]):number
+    {
+        const size:number = matrix.length;
+        let blocksCount:number = 0;
+        
+        for(var row:number = 0; row < size; row++) 
+            for(var col:number = 0; col< size; col++)
+                if (matrix[row][col])
+                    blocksCount++;
+
+        return blocksCount;
+    }
+
     static getMatrixSize(matrix:number[][]):number
     {
         let maxRow:number = 0;
@@ -36,6 +49,30 @@ export default class Utils
     {
         size = roundToInt(size);
         return new Array(size).fill(0).map(() => new Array(size).fill(0));
+    }
+
+    static resolveMatrix(matrix:number[][])
+    {
+        // get size for new matrix
+        let maxRow:number = 0;
+        let maxCol:number = 0;
+        let blocks:Point[] = [];
+
+        for(var row:number = 0; matrix[row] != undefined; row++) 
+            for(var col:number = 0; matrix[row][col] != undefined; col++)
+                if (matrix[row][col])
+                {
+                    blocks.push( new Point(col, row) );
+                    if (row > maxRow) maxRow = row;
+                    if (col > maxCol) maxCol = col;
+                }
+        
+        let grid = Utils.getMatrixEmpty( Math.max(maxRow, maxCol) + 1 );
+        // fill matrix
+        for (let p of blocks)
+            grid[p.y][p.x] = 1;
+
+        matrix = grid;
     }
 
     static getMatrixFromPoints(points:Point[], size:number):number[][]

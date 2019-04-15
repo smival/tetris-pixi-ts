@@ -1,4 +1,4 @@
-import Tetromino from './Tetromino';
+import Polimino from './Polimino';
 import {ITetroConf, ITetroEntityConf} from './Types';
 const Color = require('color');
 
@@ -6,11 +6,11 @@ export default class TetrominoPool
 {
     private lastId:number = 0;
     private poolSize:number;
-    private poolItems:Array<Tetromino>;
+    private poolItems:Array<Polimino>;
     private itemsRaw:ITetroConf;
 
-    current:Tetromino;
-    others:Tetromino[];
+    current:Polimino;
+    others:Polimino[];
     
     constructor(itemsRaw:ITetroConf)  
     {
@@ -42,7 +42,7 @@ export default class TetrominoPool
             else
                 itemColor = this.getRandomColor();
 
-            this.poolItems.push( new Tetromino(this.lastId++, item.name, item.shape, itemColor) );
+            this.poolItems.push( new Polimino(this.lastId++, item.name, item.shape, itemColor) );
         }
             
     }

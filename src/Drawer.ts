@@ -1,11 +1,11 @@
 import * as PIXI from 'pixi.js';
-import Figure from './Tetromino';
+import Polimino from './Polimino';
 
 export default class Drawer
 {
     constructor(public w:number, public h:number, public s:number) {}
 
-    drawPreviews(to:PIXI.Graphics, items:Figure[])
+    drawPreviews(to:PIXI.Graphics, items:Polimino[])
     {
         const dy:number = this.s;
         const s = this.s;
@@ -39,7 +39,7 @@ export default class Drawer
                 }
     }
 
-    drawItem(to:PIXI.Graphics, curItem:Figure)
+    drawItem(to:PIXI.Graphics, curItem:Polimino)
     {
         const s = this.s;
 
